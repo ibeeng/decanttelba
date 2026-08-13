@@ -1,11 +1,757 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const GAS_API_URL =
+    "https://script.google.com/macros/s/AKfycbxP5Pteny0gg55v8LQrTqqyzDzcxpDX6trLtRE2XK7_-fu78P1SaZOd8rrSeObzD65zhw/exec";
 ---
 
-<Layout>
-	<Welcome />
-</Layout>
+<!doctype html>
+<html lang="id">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Input Penjualan Decant TELBA</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com"
+            crossorigin
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --biru: #4f46e5;
+                --biru-hover: #4338ca;
+                --biru-soft: rgba(79, 70, 229, 0.12);
+                --accent: #7c3aed;
+                --text: #1e1b2e;
+                --text-muted: #6b7280;
+                --border: #e5e7eb;
+                --surface: #ffffff;
+                --radius: 18px;
+            }
+            * {
+                box-sizing: border-box;
+            }
+            body {
+                font-family:
+                    "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont,
+                    "Segoe UI", Roboto, sans-serif;
+                padding: 28px 16px;
+                min-height: 100vh;
+                margin: 0;
+                color: var(--text);
+                background:
+                    radial-gradient(
+                        1200px 600px at 100% -10%,
+                        rgba(124, 58, 237, 0.18),
+                        transparent 60%
+                    ),
+                    radial-gradient(
+                        1000px 500px at -10% 110%,
+                        rgba(79, 70, 229, 0.16),
+                        transparent 55%
+                    ),
+                    linear-gradient(180deg, #eef2ff 0%, #f5f3ff 100%);
+                display: flex;
+                align-items: flex-start;
+                justify-content: center;
+                -webkit-font-smoothing: antialiased;
+            }
+            .card {
+                background: var(--surface);
+                padding: 28px 24px;
+                border-radius: var(--radius);
+                border: 1px solid rgba(255, 255, 255, 0.6);
+                box-shadow:
+                    0 1px 2px rgba(16, 24, 40, 0.04),
+                    0 24px 48px -12px rgba(79, 70, 229, 0.22);
+                max-width: 420px;
+                width: 100%;
+                margin: auto;
+                position: relative;
+                overflow: hidden;
+            }
+            .card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 5px;
+                background: linear-gradient(
+                    90deg,
+                    var(--biru),
+                    var(--accent),
+                    #ec4899
+                );
+            }
+            .brand-head {
+                text-align: center;
+                margin-bottom: 22px;
+            }
+            .brand-badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 52px;
+                height: 52px;
+                border-radius: 16px;
+                background: linear-gradient(
+                    135deg,
+                    var(--biru),
+                    var(--accent)
+                );
+                font-size: 26px;
+                margin-bottom: 10px;
+                box-shadow: 0 8px 20px -6px rgba(79, 70, 229, 0.6);
+            }
+            h2 {
+                margin: 0;
+                font-size: 1.45rem;
+                font-weight: 800;
+                letter-spacing: -0.02em;
+                background: linear-gradient(
+                    90deg,
+                    var(--biru),
+                    var(--accent)
+                );
+                -webkit-background-clip: text;
+                background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+            .brand-sub {
+                margin: 4px 0 0;
+                font-size: 12.5px;
+                color: var(--text-muted);
+                font-weight: 500;
+                letter-spacing: 0.02em;
+            }
+            .form-group {
+                margin-bottom: 16px;
+            }
+            label {
+                display: block;
+                font-size: 12.5px;
+                margin-bottom: 6px;
+                color: #374151;
+                font-weight: 600;
+                letter-spacing: 0.01em;
+            }
+            input,
+            select {
+                width: 100%;
+                padding: 13px 14px;
+                border: 1.5px solid var(--border);
+                border-radius: 12px;
+                box-sizing: border-box;
+                font-size: 15px;
+                font-family: inherit;
+                transition:
+                    border-color 0.2s,
+                    box-shadow 0.2s,
+                    background 0.2s;
+                background-color: #fafafa;
+                color: var(--text);
+            }
+            input::placeholder {
+                color: #9ca3af;
+            }
+            input:hover:not(:disabled),
+            select:hover:not(:disabled) {
+                border-color: #c7c7d9;
+            }
+            input:focus,
+            select:focus {
+                outline: none;
+                background-color: #fff;
+                border-color: var(--biru);
+                box-shadow: 0 0 0 4px var(--biru-soft);
+            }
+            input:disabled,
+            select:disabled {
+                background: #f3f4f6;
+                color: #9ca3af;
+                cursor: not-allowed;
+            }
+
+            .input-prefix {
+                position: relative;
+            }
+            .input-prefix input {
+                padding-left: 40px;
+                padding-right: 40px;
+                font-weight: 600;
+            }
+            .input-prefix::before {
+                content: "Rp";
+                position: absolute;
+                left: 14px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: var(--text-muted);
+                font-size: 14px;
+                font-weight: 600;
+            }
+
+            .price-icon {
+                position: absolute;
+                right: 14px;
+                top: 50%;
+                transform: translateY(-50%);
+                display: none;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* Radio group (volume & pembayaran) */
+            .radio-group {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 10px;
+            }
+            .radio-item {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 7px;
+                background: #fafafa;
+                border: 1.5px solid var(--border);
+                border-radius: 12px;
+                padding: 12px 8px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 600;
+                color: #4b5563;
+                transition: all 0.18s ease;
+            }
+            .radio-item:hover {
+                border-color: #c7c7d9;
+                background: #f3f4f6;
+            }
+            .radio-item input {
+                width: auto;
+                margin: 0;
+                accent-color: var(--biru);
+            }
+            .radio-item.checked {
+                border-color: var(--biru);
+                background: var(--biru-soft);
+                color: var(--biru);
+                box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
+            }
+
+            button {
+                width: 100%;
+                padding: 15px;
+                background: linear-gradient(
+                    135deg,
+                    var(--biru),
+                    var(--accent)
+                );
+                color: white;
+                border: none;
+                border-radius: 12px;
+                font-size: 15.5px;
+                font-weight: 700;
+                font-family: inherit;
+                letter-spacing: 0.01em;
+                cursor: pointer;
+                margin-top: 8px;
+                box-shadow: 0 10px 24px -8px rgba(79, 70, 229, 0.65);
+                transition:
+                    transform 0.15s ease,
+                    box-shadow 0.2s ease,
+                    filter 0.2s ease;
+            }
+            button:hover:not(:disabled) {
+                filter: brightness(1.06);
+                box-shadow: 0 14px 30px -8px rgba(79, 70, 229, 0.75);
+            }
+            button:active:not(:disabled) {
+                transform: translateY(1px) scale(0.995);
+            }
+            button:disabled {
+                background: #cbd0dd;
+                box-shadow: none;
+                cursor: not-allowed;
+            }
+            #status {
+                text-align: center;
+                margin-top: 16px;
+                font-size: 13.5px;
+                font-weight: 600;
+                min-height: 20px;
+                line-height: 1.4;
+            }
+
+            #loadingOverlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(255, 255, 255, 0.86);
+                backdrop-filter: blur(4px);
+                -webkit-backdrop-filter: blur(4px);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                border-radius: var(--radius);
+                z-index: 10;
+            }
+            .spinner {
+                border: 3.5px solid rgba(79, 70, 229, 0.15);
+                border-top: 3.5px solid var(--biru);
+                border-radius: 50%;
+                width: 34px;
+                height: 34px;
+                animation: spin 0.9s linear infinite;
+                margin-bottom: 12px;
+            }
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+
+            @media (max-width: 420px) {
+                body {
+                    padding: 18px 12px;
+                }
+                .card {
+                    padding: 24px 18px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div id="loadingOverlay">
+                <div class="spinner"></div>
+                <div
+                    style="color: var(--biru); font-weight: bold; font-size: 14px;"
+                >
+                    Memuat Database...
+                </div>
+            </div>
+
+            <div class="brand-head">
+                <div class="brand-badge">🧴</div>
+                <h2>Decant TELBA</h2>
+                <p class="brand-sub">Input Penjualan Decant</p>
+            </div>
+
+            <form id="formPenjualan">
+                <div class="form-group">
+                    <label for="tanggal">Tanggal</label>
+                    <input type="date" id="tanggal" name="tanggal" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="brand">Brand</label>
+                    <input
+                        type="text"
+                        id="brand"
+                        name="brand"
+                        list="brandList"
+                        placeholder="Pilih / ketik brand..."
+                        autocomplete="off"
+                        disabled
+                        required
+                    />
+                    <datalist id="brandList"></datalist>
+                </div>
+
+                <div class="form-group">
+                    <label for="varian">Brand & Varian</label>
+                    <input
+                        type="text"
+                        id="varian"
+                        name="varian"
+                        list="varianList"
+                        placeholder="Pilih / ketik varian..."
+                        autocomplete="off"
+                        disabled
+                        required
+                    />
+                    <datalist id="varianList"></datalist>
+                </div>
+
+                <div class="form-group">
+                    <label>Volume (ml)</label>
+                    <div class="radio-group" id="volumePreset">
+                        <label class="radio-item checked">
+                            <input
+                                type="radio"
+                                name="volumePreset"
+                                value="5"
+                                checked
+                            />
+                            5 ml
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="volumePreset" value="10" />
+                            10 ml
+                        </label>
+                    </div>
+                    <input
+                        type="text"
+                        inputmode="numeric"
+                        id="volumeCustom"
+                        name="volumeCustom"
+                        placeholder="Atau volume lain (misal 2, 3, 7)..."
+                        autocomplete="off"
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label for="harga">Harga Jual</label>
+                    <div class="input-prefix">
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            id="harga"
+                            name="harga"
+                            placeholder="0"
+                            disabled
+                            required
+                        />
+                        <span id="priceIcon" class="price-icon"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Pembayaran</label>
+                    <div class="radio-group" id="ketGroup">
+                        <label class="radio-item">
+                            <input type="radio" name="ket" value="Cash" />
+                            Cash
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="ket" value="Qris" />
+                            QRIS
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="sumber">Sumber</label>
+                    <input
+                        type="text"
+                        id="sumber"
+                        name="sumber"
+                        value="Lapak 1"
+                        required
+                    />
+                </div>
+
+                <button type="submit" id="btnSubmit" disabled
+                    >Simpan Data</button
+                >
+            </form>
+
+            <div id="status"></div>
+        </div>
+
+        <script is:inline define:vars={{ GAS_API_URL }}>
+            // Format Tanggal Lokal Perangkat
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, "0");
+            const dd = String(today.getDate()).padStart(2, "0");
+            document.getElementById("tanggal").value = `${yyyy}-${mm}-${dd}`;
+
+            const form = document.getElementById("formPenjualan");
+            const inputBrand = document.getElementById("brand");
+            const dataListBrand = document.getElementById("brandList");
+            const inputVarian = document.getElementById("varian");
+            const dataListVarian = document.getElementById("varianList");
+            const volumeCustom = document.getElementById("volumeCustom");
+            const volumeRadios = document.getElementsByName("volumePreset");
+            const ketRadios = document.getElementsByName("ket");
+            const inputHarga = document.getElementById("harga");
+            const btnSubmit = document.getElementById("btnSubmit");
+            const overlay = document.getElementById("loadingOverlay");
+            const priceIcon = document.getElementById("priceIcon");
+            const statusDiv = document.getElementById("status");
+
+            let databaseProduk = {};
+            let hargaPatokan = null;
+
+            // Konvensi harga di sheet:
+            //   true  -> nilai disimpan DALAM RIBUAN (30 = Rp 30.000)
+            //   false -> nilai disimpan NILAI ASLI rupiah (30000 = Rp 30.000)
+            const HARGA_DALAM_RIBUAN = true;
+
+            function keRupiahPenuh(n) {
+                return HARGA_DALAM_RIBUAN ? n * 1000 : n;
+            }
+
+            function formatRupiah(n) {
+                return Number(n).toLocaleString("id-ID");
+            }
+
+            const iconCheck = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+            const iconEdit = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+
+            function updateIconHarga() {
+                const angkaInput = parseInt(
+                    inputHarga.value.replace(/\./g, ""),
+                    10,
+                );
+                if (
+                    hargaPatokan === null ||
+                    isNaN(angkaInput) ||
+                    inputHarga.value.trim() === ""
+                ) {
+                    priceIcon.style.display = "none";
+                } else if (angkaInput === parseInt(hargaPatokan, 10)) {
+                    priceIcon.innerHTML = iconCheck;
+                    priceIcon.style.display = "flex";
+                } else {
+                    priceIcon.innerHTML = iconEdit;
+                    priceIcon.style.display = "flex";
+                }
+            }
+
+            // Ambil nilai volume aktif: custom text kalau diisi, else radio preset.
+            function getVolumeValue() {
+                const custom = volumeCustom.value.trim();
+                if (custom) return custom;
+                const checked = [...volumeRadios].find((r) => r.checked);
+                return checked ? checked.value : "";
+            }
+
+            function kalkulasiHarga() {
+                const brand = inputBrand.value.trim();
+                const varian = inputVarian.value.trim();
+                const vol = getVolumeValue();
+
+                if (databaseProduk[brand] && databaseProduk[brand][varian]) {
+                    const hargaObj = databaseProduk[brand][varian];
+                    const mentah =
+                        (vol === "5" || vol === "10") &&
+                        hargaObj[vol] !== undefined
+                            ? hargaObj[vol]
+                            : null;
+                    hargaPatokan = mentah !== null ? keRupiahPenuh(mentah) : null;
+                    if (hargaPatokan !== null) {
+                        inputHarga.value = formatRupiah(hargaPatokan);
+                    } else {
+                        inputHarga.value = "";
+                    }
+                } else {
+                    hargaPatokan = null;
+                }
+                updateIconHarga();
+            }
+
+            inputBrand.addEventListener("input", function () {
+                const brandDipilih = this.value.trim();
+                dataListVarian.innerHTML = "";
+                inputVarian.value = "";
+                inputHarga.value = "";
+                hargaPatokan = null;
+                updateIconHarga();
+
+                if (databaseProduk[brandDipilih]) {
+                    Object.keys(databaseProduk[brandDipilih]).forEach((varian) => {
+                        let option = document.createElement("option");
+                        option.value = varian;
+                        dataListVarian.appendChild(option);
+                    });
+                }
+            });
+
+            inputVarian.addEventListener("input", kalkulasiHarga);
+
+            // Sync volume: radio preset <-> custom text
+            function syncVolumeUI() {
+                volumeRadios.forEach((r) => {
+                    const item = r.closest(".radio-item");
+                    if (item) item.classList.toggle("checked", r.checked);
+                });
+                const custom = volumeCustom.value.trim();
+                if (custom) {
+                    volumeRadios.forEach((r) => (r.checked = false));
+                } else if (![...volumeRadios].some((r) => r.checked)) {
+                    volumeRadios[0].checked = true;
+                    const item = volumeRadios[0].closest(".radio-item");
+                    if (item) item.classList.add("checked");
+                }
+                kalkulasiHarga();
+            }
+            volumeRadios.forEach((r) =>
+                r.addEventListener("change", syncVolumeUI),
+            );
+            volumeCustom.addEventListener("input", syncVolumeUI);
+
+            inputHarga.addEventListener("input", updateIconHarga);
+
+            // Pembayaran: highlight selected
+            ketRadios.forEach((r) =>
+                r.addEventListener("change", () => {
+                    ketRadios.forEach((x) =>
+                        x.closest(".radio-item").classList.toggle(
+                            "checked",
+                            x.checked,
+                        ),
+                    );
+                }),
+            );
+
+            form.addEventListener("submit", async function (e) {
+                e.preventDefault();
+
+                const hargaAngka = parseInt(
+                    inputHarga.value.replace(/\./g, ""),
+                    10,
+                );
+                const hargaSimpan = isNaN(hargaAngka)
+                    ? ""
+                    : HARGA_DALAM_RIBUAN
+                      ? Math.round(hargaAngka / 1000)
+                      : hargaAngka;
+
+                const ketEl = [...ketRadios].find((r) => r.checked);
+                const payload = {
+                    tanggal: document.getElementById("tanggal").value,
+                    brand: inputBrand.value,
+                    varian: inputVarian.value,
+                    volume: getVolumeValue(),
+                    harga: String(hargaSimpan),
+                    ket: ketEl ? ketEl.value : "",
+                    sumber: document.getElementById("sumber").value,
+                };
+
+                btnSubmit.disabled = true;
+                btnSubmit.innerText = "⏳ Menyimpan...";
+                statusDiv.innerText = "";
+
+                try {
+                    const res = await fetch(GAS_API_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify(payload),
+                    });
+
+                    if (!res.ok) {
+                        throw new Error(
+                            "HTTP " +
+                                res.status +
+                                " dari GAS. URL belum di-deploy dgn doPost " +
+                                "atau akses blm 'Anyone'.",
+                        );
+                    }
+
+                    let result;
+                    try {
+                        result = await res.json();
+                    } catch (e) {
+                        throw new Error(
+                            "Respon GAS bukan JSON. URL salah / belum deploy.",
+                        );
+                    }
+
+                    if (result.status === "success") {
+                        statusDiv.innerText = "✅ " + result.message;
+                        statusDiv.style.color = "#16a34a";
+
+                        inputBrand.value = "";
+                        inputVarian.value = "";
+                        inputHarga.value = "";
+                        volumeCustom.value = "";
+                        volumeRadios[0].checked = true;
+                        volumeRadios.forEach((r) => {
+                            const item = r.closest(".radio-item");
+                            if (item)
+                                item.classList.toggle("checked", r.checked);
+                        });
+                        ketRadios.forEach((r) => {
+                            r.checked = false;
+                            const item = r.closest(".radio-item");
+                            if (item) item.classList.remove("checked");
+                        });
+                        hargaPatokan = null;
+                        updateIconHarga();
+
+                        inputBrand.focus();
+                    } else {
+                        throw new Error(result.message);
+                    }
+                } catch (err) {
+                    statusDiv.innerText = "❌ Gagal: " + err.message;
+                    statusDiv.style.color = "#dc2626";
+                } finally {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerText = "Simpan Data";
+                }
+            });
+
+            async function initApp() {
+                try {
+                    const dbUrls = [
+                        GAS_API_URL + "?action=getDatabase",
+                        GAS_API_URL,
+                    ];
+                    for (const url of dbUrls) {
+                        try {
+                            const res = await fetch(url, {
+                                method: "GET",
+                                cache: "no-store",
+                            });
+                            if (!res.ok) continue;
+                            let data = await res.json();
+                            let db = null;
+                            if (
+                                data &&
+                                data.status === "success" &&
+                                data.data
+                            ) {
+                                db = data.data;
+                            } else if (data && typeof data === "object") {
+                                db = data;
+                            }
+                            if (
+                                db &&
+                                typeof db === "object" &&
+                                Object.keys(db).length > 0
+                            ) {
+                                databaseProduk = db;
+                                Object.keys(databaseProduk).forEach((brand) => {
+                                    const opt =
+                                        document.createElement("option");
+                                    opt.value = brand;
+                                    dataListBrand.appendChild(opt);
+                                });
+                                statusDiv.innerText =
+                                    "✅ Database produk dimuat (" +
+                                    Object.keys(databaseProduk).length +
+                                    " brand)";
+                                statusDiv.style.color = "#16a34a";
+                                break;
+                            }
+                        } catch (err) {
+                            // CORS / network error -> coba URL berikutnya
+                        }
+                    }
+                } finally {
+                    overlay.style.display = "none";
+                    inputBrand.disabled = false;
+                    inputVarian.disabled = false;
+                    inputHarga.disabled = false;
+                    btnSubmit.disabled = false;
+                }
+            }
+
+            initApp();
+        </script>
+    </body>
+</html>
