@@ -144,18 +144,6 @@ const GAS_API_URL =
                 font-weight: 500;
                 margin-bottom: 8px;
             }
-            .page-meta {
-                text-align: right;
-                color: var(--text-muted);
-                font-size: 13px;
-            }
-            .page-meta strong {
-                display: block;
-                font-family: "Cormorant Garamond", serif;
-                font-size: 1.6rem;
-                color: var(--chocolate);
-                font-weight: 600;
-            }
 
             /* Card form full-width clean */
             .card {
@@ -200,6 +188,29 @@ const GAS_API_URL =
             }
             .form-field.full {
                 grid-column: 1 / -1;
+            }
+                        textarea {
+                width: 100%;
+                padding: 14px 0;
+                border: none;
+                border-bottom: 1.5px solid var(--line);
+                background: transparent;
+                font-size: 16px;
+                font-family: inherit;
+                color: var(--text);
+                transition: border-color 0.2s ease;
+                border-radius: 0;
+                resize: none;
+                min-height: 45px;
+                display: block;
+            }
+            textarea::placeholder {
+                color: #b8aea0;
+                font-weight: 400;
+            }
+            textarea:focus {
+                outline: none;
+                border-bottom-color: var(--gold);
             }
             label {
                 font-size: 11px;
@@ -474,21 +485,6 @@ const GAS_API_URL =
                 .main { padding: 20px 16px; }
                 .page-head { padding-bottom: 8px; margin-bottom: 14px; border-bottom: none; align-items: center; }
                 .page-title { font-size: 1.15rem; line-height: 1.2; }
-                .page-meta {
-                    font-size: 11px;
-                    letter-spacing: 0.15em;
-                    text-transform: uppercase;
-                    color: var(--text-muted);
-                    font-weight: 600;
-                }
-                .page-meta strong {
-                    font-size: 0.95rem;
-                    font-family: "Inter", sans-serif;
-                    font-weight: 700;
-                    color: var(--chocolate);
-                    display: inline;
-                    margin-right: 4px;
-                }
                 .form-grid { grid-template-columns: 1fr; gap: 18px; }
                 .radio-group { grid-template-columns: repeat(4, 1fr); }
                 .card { padding: 24px 18px; }
@@ -518,6 +514,12 @@ const GAS_API_URL =
 </style>
     </head>
     <body>
+        <nav class="top-nav">
+            <div class="top-nav-brand">TELBA</div>
+            <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+        </nav>
         <div class="layout">
             <aside class="sidebar">
                 <div class="sidebar-brand"><span class="dot"></span>TELBA</div>
@@ -533,10 +535,7 @@ const GAS_API_URL =
                     <div>
                         <h1 class="page-title">Sales Input</h1>
                     </div>
-                    <div class="page-meta">
-                        <strong>Lapak 1</strong>
-                        Aktif
-                    </div>
+                    <!-- Meta info removed -->
                 </header>
                 <div class="card">
                     <div class="card-head">
@@ -569,13 +568,13 @@ const GAS_API_URL =
                             <div class="form-field full">
                                 <label>Volume (ml)</label>
                                 <div class="radio-group" id="volumePreset">
-                                    <label class="radio-item checked">
+                                    <label class="radio-item">
                                         <input type="radio" name="volumePreset" value="2" /> 2ml
                                     </label>
                                     <label class="radio-item">
                                         <input type="radio" name="volumePreset" value="3" /> 3ml
                                     </label>
-                                    <label class="radio-item">
+                                    <label class="radio-item checked">
                                         <input type="radio" name="volumePreset" value="5" checked /> 5ml
                                     </label>
                                     <label class="radio-item">
@@ -619,12 +618,7 @@ const GAS_API_URL =
                 </div>
             </main>
         </div>
-        <nav class="top-nav">
-            <div class="top-nav-brand">TELBA</div>
-            <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-            </button>
-        </nav>
+        
         <div class="nav-backdrop" id="navBackdrop"></div>
         <aside class="nav-drawer" id="navDrawer">
             <div class="nav-item active">Sales Input</div>
