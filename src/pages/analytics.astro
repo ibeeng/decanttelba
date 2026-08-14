@@ -1,0 +1,332 @@
+---
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx99wNr-G6O4imTqDjngEitpJjtqm4HZrnL_F1fEYJ6HmQLI09vHfUkGspg057obzPE4w/exec";
+---
+
+<!doctype html>
+<html lang="id">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Analytics - Decant TELBA</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            :root {
+                --bg: #f7f5f1;
+                --surface: #ffffff;
+                --chocolate: #2a1b15;
+                --gold: #c19a4b;
+                --line: #e6e1d8;
+                --text: #1f1612;
+                --text-muted: #6b6259;
+                --radius: 4px;
+            }
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body {
+                font-family: "Inter", sans-serif;
+                background: var(--bg);
+                color: var(--text);
+                min-height: 100vh;
+            }
+
+            /* Layout */
+            .top-nav {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 20px;
+                background: var(--surface);
+                border-bottom: 1px solid var(--line);
+                position: sticky;
+                top: 0;
+                z-index: 50;
+            }
+            .top-nav-brand {
+                font-family: "Cormorant Garamond", serif;
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: var(--chocolate);
+            }
+            .hamburger {
+                width: 40px; height: 40px;
+                border: 1px solid var(--line);
+                background: transparent;
+                display: flex; align-items: center; justify-content: center;
+                cursor: pointer; border-radius: var(--radius);
+            }
+
+            .main { padding: 20px 16px; max-width: 1000px; margin: 0 auto; }
+            .header { margin-bottom: 24px; }
+            .header h1 { font-family: "Cormorant Garamond", serif; font-size: 1.8rem; margin-bottom: 4px; }
+            
+            /* Stats Cards */
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: 12px;
+                margin-bottom: 24px;
+            }
+            .stat-card {
+                background: var(--surface);
+                padding: 16px;
+                border: 1px solid var(--line);
+                border-radius: var(--radius);
+            }
+            .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 4px; }
+            .stat-value { font-size: 1.25rem; font-weight: 700; color: var(--chocolate); }
+
+            /* Filter */
+            .filter-section {
+                background: var(--surface);
+                padding: 16px;
+                border: 1px solid var(--line);
+                border-radius: var(--radius);
+                margin-bottom: 24px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .filter-row { display: flex; gap: 12px; }
+            .filter-group { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+            .filter-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+            input, select {
+                padding: 10px;
+                border: 1px solid var(--line);
+                border-radius: var(--radius);
+                font-family: inherit;
+                font-size: 14px;
+            }
+
+            /* Chart Container */
+            .chart-container {
+                background: var(--surface);
+                padding: 20px;
+                border: 1px solid var(--line);
+                border-radius: var(--radius);
+                margin-bottom: 24px;
+                height: 300px;
+            }
+
+            /* Loader */
+            #loadingOverlay {
+                position: fixed; inset: 0; background: rgba(247, 245, 241, 0.9);
+                display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
+            }
+            .spinner { border: 2px solid var(--line); border-top: 2px solid var(--chocolate); border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; margin-bottom: 12px; }
+            @keyframes spin { to { transform: rotate(360deg); } }
+
+            .nav-drawer {
+                position: fixed; top: 0; right: 0; height: 100vh; width: 260px; max-width: 80vw;
+                background: var(--chocolate); color: var(--cream); z-index: 90;
+                transform: translateX(100%); transition: transform 0.25s ease;
+                padding-top: 40px;
+            }
+            .nav-drawer.open { transform: translateX(0); }
+            .nav-item { padding: 16px 24px; cursor: pointer; color: #f5ebd6; text-decoration: none; display: block; font-size: 14px; }
+            .nav-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 89; display: none; }
+            .nav-backdrop.open { display: block; }
+        </style>
+    </head>
+    <body>
+        <nav class="top-nav">
+            <div class="top-nav-brand">TELBA ANALYTICS</div>
+            <button class="hamburger" id="hamburgerBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+        </nav>
+
+        <div class="nav-backdrop" id="navBackdrop"></div>
+        <aside class="nav-drawer" id="navDrawer">
+            <a href="/" class="nav-item">Sales Input</a>
+            <a href="/analytics" class="nav-item active">Analytics</a>
+        </aside>
+
+        <main class="main">
+            <header class="header">
+                <h1>Overview</h1>
+            </header>
+
+            <div class="filter-section">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label>Mulai</label>
+                        <input type="date" id="dateStart" />
+                    </div>
+                    <div class="filter-group">
+                        <label>Selesai</label>
+                        <input type="date" id="dateEnd" />
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>Brand</label>
+                    <select id="brandFilter">
+                        <option value="all">Semua Brand</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Omzet</div>
+                    <div class="stat-value" id="totalOmzet">Rp 0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Transaksi</div>
+                    <div class="stat-value" id="totalTrx">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg. Order</div>
+                    <div class="stat-value" id="avgOrder">Rp 0</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="salesChart"></canvas>
+            </div>
+        </main>
+
+        <div id="loadingOverlay">
+            <div class="spinner"></div>
+            <p style="font-size: 11px; letter-spacing: 0.1em; color: var(--text-muted);">MEMUAT DATA...</p>
+        </div>
+
+        <script is:inline define:vars={{ GAS_API_URL }}>
+            const hamburgerBtn = document.getElementById("hamburgerBtn");
+            const navDrawer = document.getElementById("navDrawer");
+            const navBackdrop = document.getElementById("navBackdrop");
+            const overlay = document.getElementById("loadingOverlay");
+            
+            const dateStart = document.getElementById("dateStart");
+            const dateEnd = document.getElementById("dateEnd");
+            const brandFilter = document.getElementById("brandFilter");
+            
+            const totalOmzetEl = document.getElementById("totalOmzet");
+            const totalTrxEl = document.getElementById("totalTrx");
+            const avgOrderEl = document.getElementById("avgOrder");
+
+            let allTransactions = [];
+            let chartInstance = null;
+
+            // Nav logic
+            function toggleNav(open) {
+                const willOpen = open ?? !navDrawer.classList.contains("open");
+                navDrawer.classList.toggle("open", willOpen);
+                navBackdrop.style.display = willOpen ? "block" : "none";
+            }
+            hamburgerBtn.addEventListener("click", () => toggleNav());
+            navBackdrop.addEventListener("click", () => toggleNav(false));
+
+            function formatRupiah(n) {
+                return "Rp " + Number(n).toLocaleString("id-ID");
+            }
+
+            function updateStats(filtered) {
+                const total = filtered.reduce((acc, curr) => {
+                    const price = parseInt(String(curr.harga).replace(/[^0-9]/g, "")) || 0;
+                    // Handle ribuan conversion if needed
+                    return acc + (price < 1000 ? price * 1000 : price);
+                }, 0);
+
+                totalOmzetEl.innerText = formatRupiah(total);
+                totalTrxEl.innerText = filtered.length;
+                avgOrderEl.innerText = filtered.length ? formatRupiah(Math.round(total / filtered.length)) : "Rp 0";
+
+                updateChart(filtered);
+            }
+
+            function updateChart(filtered) {
+                const ctx = document.getElementById('salesChart').getContext('2d');
+                
+                // Group by date
+                const grouped = filtered.reduce((acc, curr) => {
+                    const date = new Date(curr.tanggal).toLocaleDateString('id-ID', {day:'numeric', month:'short'});
+                    const price = parseInt(String(curr.harga).replace(/[^0-9]/g, "")) || 0;
+                    const val = price < 1000 ? price * 1000 : price;
+                    acc[date] = (acc[date] || 0) + val;
+                    return acc;
+                }, {});
+
+                const labels = Object.keys(grouped);
+                const data = Object.values(grouped);
+
+                if (chartInstance) chartInstance.destroy();
+
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Penjualan',
+                            data: data,
+                            borderColor: '#2a1b15',
+                            backgroundColor: 'rgba(42, 27, 21, 0.05)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 2,
+                            pointBackgroundColor: '#c19a4b'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#e6e1d8' }, ticks: { font: { size: 10 } } },
+                            x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                        }
+                    }
+                });
+            }
+
+            function applyFilters() {
+                const start = dateStart.value;
+                const end = dateEnd.value;
+                const brand = brandFilter.value;
+
+                const filtered = allTransactions.filter(t => {
+                    const tDate = t.tanggal.split('T')[0];
+                    const matchDate = (!start || tDate >= start) && (!end || tDate <= end);
+                    const matchBrand = (brand === 'all' || t.brand === brand);
+                    return matchDate && matchBrand;
+                });
+
+                updateStats(filtered);
+            }
+
+            async function init() {
+                // Set default dates (last 30 days)
+                const now = new Date();
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(now.getDate() - 30);
+                
+                dateEnd.value = now.toISOString().split('T')[0];
+                dateStart.value = thirtyDaysAgo.toISOString().split('T')[0];
+
+                try {
+                    const res = await fetch(GAS_API_URL + "?action=getTransactions");
+                    allTransactions = await res.json();
+                    
+                    // Fill Brand Filter
+                    const brands = [...new Set(allTransactions.map(t => t.brand))].sort();
+                    brands.forEach(b => {
+                        const opt = document.createElement("option");
+                        opt.value = b;
+                        opt.innerText = b;
+                        brandFilter.appendChild(opt);
+                    });
+
+                    applyFilters();
+                } catch (e) {
+                    console.error("Gagal muat data:", e);
+                } finally {
+                    overlay.style.display = "none";
+                }
+            }
+
+            [dateStart, dateEnd, brandFilter].forEach(el => el.addEventListener("change", applyFilters));
+            init();
+        </script>
+    </body>
+</html>
