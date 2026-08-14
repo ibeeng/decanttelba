@@ -377,44 +377,95 @@ const GAS_API_URL =
                 font-weight: 600;
             }
 
+            /* Floating hamburger menu (mobile only) */
+            .fab-menu {
+                display: none;
+                position: fixed;
+                right: 18px;
+                bottom: 88px;
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                background: var(--chocolate);
+                color: var(--cream);
+                border: none;
+                box-shadow: 0 8px 24px rgba(42, 27, 21, 0.35);
+                z-index: 80;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                padding: 0;
+                transition: transform 0.2s ease;
+            }
+            .fab-menu:hover { transform: translateY(-2px); }
+            .fab-menu svg { width: 22px; height: 22px; }
+            .fab-drawer {
+                position: fixed;
+                right: 16px;
+                bottom: 156px;
+                background: var(--chocolate);
+                color: var(--cream);
+                border-radius: var(--radius);
+                box-shadow: 0 16px 40px rgba(42, 27, 21, 0.4);
+                padding: 8px 0;
+                min-width: 200px;
+                z-index: 79;
+                opacity: 0;
+                transform: translateY(8px) scale(0.96);
+                pointer-events: none;
+                transition: opacity 0.18s ease, transform 0.18s ease;
+            }
+            .fab-drawer.open {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                pointer-events: auto;
+            }
+            .fab-drawer .nav-item {
+                padding: 14px 20px;
+                border-left: none;
+                border-radius: 0;
+                font-size: 14px;
+                white-space: nowrap;
+            }
+            .fab-drawer .nav-item.active {
+                color: var(--gold);
+                background: rgba(212, 168, 87, 0.12);
+                border-left: none;
+            }
+            .fab-backdrop {
+                position: fixed;
+                inset: 0;
+                background: transparent;
+                z-index: 78;
+                display: none;
+            }
+            .fab-backdrop.open { display: block; }
+
+            
             /* Responsive - sidebar collapse di mobile */
             @media (max-width: 900px) {
-                .layout {
-                    grid-template-columns: 1fr;
-                }
-                .sidebar {
-                    padding: 20px 24px;
-                }
-                .sidebar-nav {
-                    display: none;
-                }
-                .main {
-                    padding: 32px 24px;
-                }
-                .page-head {
-                    flex-direction: column;
-                    align-items: flex-start;
-                    gap: 16px;
-                }
-                .page-meta { text-align: left; }
-                .form-grid {
-                    grid-template-columns: 1fr;
-                    gap: 20px;
-                }
-                .radio-group {
-                    grid-template-columns: repeat(2, 1fr);
-                }
-                .card {
-                    padding: 28px 24px;
-                }
+                .layout { grid-template-columns: 1fr; }
+                .sidebar { padding: 14px 20px; flex-direction: row; align-items: center; gap: 12px; }
+                .sidebar-sub, .sidebar-nav, .sidebar-spacer { display: none; }
+                .main { padding: 24px 20px; }
+                .page-head { padding-bottom: 12px; margin-bottom: 16px; }
+                .page-title { font-size: 1.15rem; }
+                .page-meta { display: none; }
+                .form-grid { grid-template-columns: 1fr; gap: 18px; }
+                .radio-group { grid-template-columns: repeat(4, 1fr); }
+                .card { padding: 20px 16px; }
+                .card-head { margin-bottom: 16px; }
+                .form-actions { flex-direction: column; gap: 16px; }
+                .form-actions button { width: 100%; order: 1; }
+                #status { order: 2; text-align: center; font-size: 11px; }
+                .fab-menu { display: inline-flex; }
             }
             @media (max-width: 480px) {
-                .page-title { font-size: 1.8rem; }
-                .radio-group {
-                    grid-template-columns: 1fr 1fr;
-                }
+                .radio-group { grid-template-columns: repeat(2, 1fr); }
+                .sidebar { padding: 12px 16px; }
+                .sidebar-brand { font-size: 1.25rem; }
             }
-        </style>
+</style>
     </head>
     <body>
         <div class="layout">
@@ -430,7 +481,6 @@ const GAS_API_URL =
             <main class="main">
                 <header class="page-head">
                     <div>
-                        <div class="page-title-sub">Module</div>
                         <h1 class="page-title">Sales Input</h1>
                     </div>
                     <div class="page-meta">
@@ -453,6 +503,11 @@ const GAS_API_URL =
                             <div class="form-field">
                                 <label for="sumber">Sumber</label>
                                 <input type="text" id="sumber" name="sumber" value="Lapak 1" required />
+                            </div>
+                            <!-- Field Keterangan Baru -->
+                            <div class="form-field full">
+                                <label for="keterangan">Keterangan (Opsional)</label>
+                                <textarea id="keterangan" name="keterangan" placeholder="Catatan tambahan..."></textarea>
                             </div>
 
                             <div class="form-field">
@@ -513,6 +568,17 @@ const GAS_API_URL =
                     </form>
                 </div>
             </main>
+            <button class="fab-menu" id="fabMenu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            <div class="fab-backdrop" id="fabBackdrop"></div>
+            <div class="fab-drawer" id="fabDrawer">
+                <nav>
+                    <div class="nav-item active">Sales Input</div>
+                    <div class="nav-item">Analytics</div>
+                    <div class="nav-item">Database</div>
+                </nav>
+            </div>
         </div>
 
         <div id="loadingOverlay">
@@ -541,6 +607,18 @@ const GAS_API_URL =
             const overlay = document.getElementById("loadingOverlay");
             const priceIcon = document.getElementById("priceIcon");
             const statusDiv = document.getElementById("status");
+            const fabMenu = document.getElementById("fabMenu");
+            const fabDrawer = document.getElementById("fabDrawer");
+            const fabBackdrop = document.getElementById("fabBackdrop");
+
+            // FAB hamburger toggle
+            function toggleFab(open) {
+                const willOpen = open ?? !fabDrawer.classList.contains("open");
+                fabDrawer.classList.toggle("open", willOpen);
+                fabBackdrop.classList.toggle("open", willOpen);
+            }
+            fabMenu.addEventListener("click", () => toggleFab());
+            fabBackdrop.addEventListener("click", () => toggleFab(false));
 
             let databaseProduk = {};
             let hargaPatokan = null;
@@ -697,6 +775,7 @@ const GAS_API_URL =
                     harga: String(hargaSimpan),
                     ket: ketEl ? ketEl.value : "",
                     sumber: document.getElementById("sumber").value,
+                    keterangan: document.getElementById("keterangan").value,
                 };
 
                 btnSubmit.disabled = true;
@@ -736,6 +815,7 @@ const GAS_API_URL =
                         inputVarian.value = "";
                         inputHarga.value = "";
                         volumeCustom.value = "";
+                        document.getElementById("keterangan").value = "";
                         volumeRadios[0].checked = true;
                         volumeRadios.forEach((r) => {
                             const item = r.closest(".radio-item");
