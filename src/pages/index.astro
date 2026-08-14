@@ -465,11 +465,9 @@ const GAS_API_URL =
 
             
             /* Responsive - sidebar collapse di mobile */
+            
+            /* Responsive - sidebar collapse di mobile */
             @media (max-width: 900px) {
-                .layout { grid-template-columns: 1fr; }
-                .sidebar { padding: 14px 20px; flex-direction: row; align-items: center; gap: 12px; }
-                .sidebar-sub, .sidebar-nav, .sidebar-spacer { display: none; }
-                .main { padding: 24px 20px; }
                 .layout { grid-template-columns: 1fr; }
                 .sidebar { display: none; }
                 .top-nav { display: flex; }
@@ -508,7 +506,11 @@ const GAS_API_URL =
                 }
                 #status { order: 2; text-align: center; font-size: 11px; }
             }
-            @media (max-width: 480px) {
+             {
+                .radio-group { grid-template-columns: repeat(2, 1fr); }
+                .sidebar { padding: 12px 16px; }
+                .sidebar-brand { font-size: 1.25rem; }
+            } {
                 .radio-group { grid-template-columns: repeat(2, 1fr); }
                 .sidebar { padding: 12px 16px; }
                 .sidebar-brand { font-size: 1.25rem; }
