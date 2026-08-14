@@ -377,69 +377,91 @@ const GAS_API_URL =
                 font-weight: 600;
             }
 
-            /* Floating hamburger menu (mobile only) */
-            .fab-menu {
+            /* Top navbar hamburger (mobile only) */
+            .top-nav {
                 display: none;
-                position: fixed;
-                right: 18px;
-                bottom: 88px;
-                width: 56px;
-                height: 56px;
-                border-radius: 50%;
-                background: var(--chocolate);
-                color: var(--cream);
-                border: none;
-                box-shadow: 0 8px 24px rgba(42, 27, 21, 0.35);
-                z-index: 80;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 20px;
+                background: var(--surface);
+                border-bottom: 1px solid var(--line);
+                position: sticky;
+                top: 0;
+                z-index: 50;
+            }
+            .top-nav-brand {
+                font-family: "Cormorant Garamond", serif;
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: var(--chocolate);
+                letter-spacing: 0.04em;
+            }
+            .hamburger {
+                width: 40px;
+                height: 40px;
+                background: transparent;
+                border: 1px solid var(--line);
+                border-radius: var(--radius);
+                color: var(--chocolate);
+                display: inline-flex;
                 align-items: center;
                 justify-content: center;
                 cursor: pointer;
                 padding: 0;
-                transition: transform 0.2s ease;
+                transition: all 0.15s ease;
             }
-            .fab-menu:hover { transform: translateY(-2px); }
-            .fab-menu svg { width: 22px; height: 22px; }
-            .fab-drawer {
+            .hamburger:hover {
+                border-color: var(--chocolate);
+                background: var(--bg);
+            }
+            .hamburger svg { width: 20px; height: 20px; }
+            .nav-drawer {
                 position: fixed;
-                right: 16px;
-                bottom: 156px;
+                top: 0;
+                right: 0;
+                height: 100vh;
+                width: 260px;
+                max-width: 80vw;
                 background: var(--chocolate);
                 color: var(--cream);
-                border-radius: var(--radius);
-                box-shadow: 0 16px 40px rgba(42, 27, 21, 0.4);
-                padding: 8px 0;
-                min-width: 200px;
-                z-index: 79;
-                opacity: 0;
-                transform: translateY(8px) scale(0.96);
-                pointer-events: none;
-                transition: opacity 0.18s ease, transform 0.18s ease;
+                padding: 24px 0;
+                z-index: 90;
+                transform: translateX(100%);
+                transition: transform 0.25s ease;
+                box-shadow: -8px 0 24px rgba(0,0,0,0.18);
             }
-            .fab-drawer.open {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-                pointer-events: auto;
-            }
-            .fab-drawer .nav-item {
-                padding: 14px 20px;
+            .nav-drawer.open { transform: translateX(0); }
+            .nav-drawer .nav-item {
+                padding: 16px 24px;
                 border-left: none;
                 border-radius: 0;
                 font-size: 14px;
                 white-space: nowrap;
+                color: rgba(245, 235, 214, 0.75);
             }
-            .fab-drawer .nav-item.active {
+            .nav-drawer .nav-item:hover {
+                background: rgba(212, 168, 87, 0.08);
+                color: var(--cream);
+            }
+            .nav-drawer .nav-item.active {
                 color: var(--gold);
                 background: rgba(212, 168, 87, 0.12);
-                border-left: none;
             }
-            .fab-backdrop {
+            .nav-backdrop {
                 position: fixed;
                 inset: 0;
-                background: transparent;
-                z-index: 78;
-                display: none;
+                background: rgba(42, 27, 21, 0.45);
+                backdrop-filter: blur(2px);
+                -webkit-backdrop-filter: blur(2px);
+                z-index: 89;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.2s ease;
             }
-            .fab-backdrop.open { display: block; }
+            .nav-backdrop.open {
+                opacity: 1;
+                pointer-events: auto;
+            }
 
             
             /* Responsive - sidebar collapse di mobile */
@@ -448,17 +470,43 @@ const GAS_API_URL =
                 .sidebar { padding: 14px 20px; flex-direction: row; align-items: center; gap: 12px; }
                 .sidebar-sub, .sidebar-nav, .sidebar-spacer { display: none; }
                 .main { padding: 24px 20px; }
-                .page-head { padding-bottom: 12px; margin-bottom: 16px; }
-                .page-title { font-size: 1.15rem; }
-                .page-meta { display: none; }
+                .layout { grid-template-columns: 1fr; }
+                .sidebar { display: none; }
+                .top-nav { display: flex; }
+                .main { padding: 20px 16px; }
+                .page-head { padding-bottom: 8px; margin-bottom: 14px; border-bottom: none; align-items: center; }
+                .page-title { font-size: 1.15rem; line-height: 1.2; }
+                .page-meta {
+                    font-size: 11px;
+                    letter-spacing: 0.15em;
+                    text-transform: uppercase;
+                    color: var(--text-muted);
+                    font-weight: 600;
+                }
+                .page-meta strong {
+                    font-size: 0.95rem;
+                    font-family: "Inter", sans-serif;
+                    font-weight: 700;
+                    color: var(--chocolate);
+                    display: inline;
+                    margin-right: 4px;
+                }
                 .form-grid { grid-template-columns: 1fr; gap: 18px; }
                 .radio-group { grid-template-columns: repeat(4, 1fr); }
-                .card { padding: 20px 16px; }
-                .card-head { margin-bottom: 16px; }
-                .form-actions { flex-direction: column; gap: 16px; }
-                .form-actions button { width: 100%; order: 1; }
+                .card { padding: 24px 18px; }
+                .card-head { margin-bottom: 20px; }
+                .card-title { font-size: 1.2rem; }
+                .card-tag { font-size: 9px; padding: 5px 10px; }
+                .form-actions { flex-direction: column; gap: 12px; align-items: stretch; }
+                .form-actions button {
+                    width: 100%;
+                    order: 1;
+                    text-align: center;
+                    justify-content: center;
+                    padding: 16px;
+                    font-size: 14px;
+                }
                 #status { order: 2; text-align: center; font-size: 11px; }
-                .fab-menu { display: inline-flex; }
             }
             @media (max-width: 480px) {
                 .radio-group { grid-template-columns: repeat(2, 1fr); }
@@ -503,11 +551,6 @@ const GAS_API_URL =
                             <div class="form-field">
                                 <label for="sumber">Sumber</label>
                                 <input type="text" id="sumber" name="sumber" value="Lapak 1" required />
-                            </div>
-                            <!-- Field Keterangan Baru -->
-                            <div class="form-field full">
-                                <label for="keterangan">Keterangan (Opsional)</label>
-                                <textarea id="keterangan" name="keterangan" placeholder="Catatan tambahan..."></textarea>
                             </div>
 
                             <div class="form-field">
@@ -557,6 +600,11 @@ const GAS_API_URL =
                                     </label>
                                 </div>
                             </div>
+
+                            <div class="form-field full">
+                                <label for="keterangan">Keterangan <span style="text-transform:none;letter-spacing:0;font-weight:500;color:#9b8f80;">(Opsional)</span></label>
+                                <textarea id="keterangan" name="keterangan" placeholder="Catatan tambahan..." rows="2"></textarea>
+                            </div>
                         </div>
 
                         <div class="form-actions">
@@ -568,18 +616,19 @@ const GAS_API_URL =
                     </form>
                 </div>
             </main>
-            <button class="fab-menu" id="fabMenu">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-            </button>
-            <div class="fab-backdrop" id="fabBackdrop"></div>
-            <div class="fab-drawer" id="fabDrawer">
-                <nav>
-                    <div class="nav-item active">Sales Input</div>
-                    <div class="nav-item">Analytics</div>
-                    <div class="nav-item">Database</div>
-                </nav>
-            </div>
         </div>
+        <nav class="top-nav">
+            <div class="top-nav-brand">TELBA</div>
+            <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+        </nav>
+        <div class="nav-backdrop" id="navBackdrop"></div>
+        <aside class="nav-drawer" id="navDrawer">
+            <div class="nav-item active">Sales Input</div>
+            <div class="nav-item">Analytics</div>
+            <div class="nav-item">Database</div>
+        </aside>
 
         <div id="loadingOverlay">
             <div class="spinner"></div>
@@ -607,18 +656,22 @@ const GAS_API_URL =
             const overlay = document.getElementById("loadingOverlay");
             const priceIcon = document.getElementById("priceIcon");
             const statusDiv = document.getElementById("status");
-            const fabMenu = document.getElementById("fabMenu");
-            const fabDrawer = document.getElementById("fabDrawer");
-            const fabBackdrop = document.getElementById("fabBackdrop");
+            const hamburgerBtn = document.getElementById("hamburgerBtn");
+            const navDrawer = document.getElementById("navDrawer");
+            const navBackdrop = document.getElementById("navBackdrop");
 
-            // FAB hamburger toggle
-            function toggleFab(open) {
-                const willOpen = open ?? !fabDrawer.classList.contains("open");
-                fabDrawer.classList.toggle("open", willOpen);
-                fabBackdrop.classList.toggle("open", willOpen);
+            // Drawer toggle
+            function toggleNav(open) {
+                const willOpen = open ?? !navDrawer.classList.contains("open");
+                navDrawer.classList.toggle("open", willOpen);
+                navBackdrop.classList.toggle("open", willOpen);
             }
-            fabMenu.addEventListener("click", () => toggleFab());
-            fabBackdrop.addEventListener("click", () => toggleFab(false));
+            hamburgerBtn.addEventListener("click", () => toggleNav());
+            navBackdrop.addEventListener("click", () => toggleNav(false));
+            // Tutup drawer kalau nav-item diklik
+            document.querySelectorAll(".nav-drawer .nav-item").forEach((item) => {
+                item.addEventListener("click", () => toggleNav(false));
+            });
 
             let databaseProduk = {};
             let hargaPatokan = null;
