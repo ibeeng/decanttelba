@@ -609,10 +609,18 @@ const GAS_API_URL =
                         </div>
 
                         <div class="form-actions">
-                            <div id="status">Ready</div>
-                            <button type="submit" id="btnSubmit" disabled>
-                                Submit Record <span class="arrow">→</span>
+                            <button type="button" id="btnAddCart" style="background:var(--cream); color:var(--chocolate); border:1px solid var(--chocolate); padding:16px 20px; flex:1;">
+                                + Tambah ke Keranjang
                             </button>
+                            <button type="submit" id="btnSubmit" style="flex:1;">
+                                Simpan Semua <span class="arrow">→</span>
+                            </button>
+                        </div>
+                        
+                        <div id="cartSection" style="margin-top:24px; display:none;">
+                            <h3 style="font-size:1.1rem; margin-bottom:12px; color:var(--chocolate);">Keranjang (<span id="cartCount">0</span>)</h3>
+                            <div id="cartList" style="border:1px solid var(--line); border-radius:var(--radius); padding:12px; margin-bottom:12px; font-size: 14px;">
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -649,6 +657,51 @@ const GAS_API_URL =
             const ketRadios = document.getElementsByName("ket");
             const inputHarga = document.getElementById("harga");
             const btnSubmit = document.getElementById("btnSubmit");
+            const btnAddCart = document.getElementById("btnAddCart");
+            const cartSection = document.getElementById("cartSection");
+            const cartList = document.getElementById("cartList");
+            const cartCount = document.getElementById("cartCount");
+            let cart = [];
+
+            // Add to cart logic
+            btnAddCart.addEventListener("click", () => {
+                const payload = getFormPayload(); // Perlu extract payload logic dulu
+                cart.push(payload);
+                renderCart();
+            });
+
+            function renderCart() {
+                cartSection.style.display = cart.length ? "block" : "none";
+                cartCount.innerText = cart.length;
+                cartList.innerHTML = cart.map((item, idx) => `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span>${item.brand} - ${item.varian} (${item.volume}ml)</span>
+                        <span style="color:var(--gold); cursor:pointer;" onclick="removeFromCart(${idx})">×</span>
+                    </div>
+                `).join("");
+            }
+
+            function removeFromCart(idx) {
+                cart.splice(idx, 1);
+                renderCart();
+            }
+
+            function getFormPayload() {
+                const hargaAngka = parseInt(inputHarga.value.replace(/\./g, ""), 10);
+                const hargaSimpan = isNaN(hargaAngka) ? "" : HARGA_DALAM_RIBUAN ? Math.round(hargaAngka / 1000) : hargaAngka;
+                const ketEl = [...ketRadios].find((r) => r.checked);
+                return {
+                    tanggal: document.getElementById("tanggal").value,
+                    brand: inputBrand.value,
+                    varian: inputVarian.value,
+                    volume: getVolumeValue(),
+                    harga: String(hargaSimpan),
+                    ket: ketEl ? ketEl.value : "",
+                    sumber: document.getElementById("sumber").value,
+                    keterangan: document.getElementById("keterangan").value,
+                };
+            }
+
             const overlay = document.getElementById("loadingOverlay");
             const priceIcon = document.getElementById("priceIcon");
             const statusDiv = document.getElementById("status");
@@ -804,91 +857,33 @@ const GAS_API_URL =
 
             form.addEventListener("submit", async function (e) {
                 e.preventDefault();
-
-                const hargaAngka = parseInt(
-                    inputHarga.value.replace(/\./g, ""),
-                    10,
-                );
-                const hargaSimpan = isNaN(hargaAngka)
-                    ? ""
-                    : HARGA_DALAM_RIBUAN
-                      ? Math.round(hargaAngka / 1000)
-                      : hargaAngka;
-
-                const ketEl = [...ketRadios].find((r) => r.checked);
-                const payload = {
-                    tanggal: document.getElementById("tanggal").value,
-                    brand: inputBrand.value,
-                    varian: inputVarian.value,
-                    volume: getVolumeValue(),
-                    harga: String(hargaSimpan),
-                    ket: ketEl ? ketEl.value : "",
-                    sumber: document.getElementById("sumber").value,
-                    keterangan: document.getElementById("keterangan").value,
-                };
+                if (cart.length === 0) {
+                    // Kalau kosong, submit data saat ini saja
+                    cart.push(getFormPayload());
+                }
 
                 btnSubmit.disabled = true;
-                btnSubmit.innerText = "⏳ Menyimpan...";
-                statusDiv.innerText = "";
-
+                btnSubmit.innerText = "⏳ Menyimpan " + cart.length + " data...";
+                    
                 try {
-                    const res = await fetch(GAS_API_URL, {
-                        method: "POST",
-                        headers: { "Content-Type": "text/plain;charset=utf-8" },
-                        body: JSON.stringify(payload),
-                    });
-
-                    if (!res.ok) {
-                        throw new Error(
-                            "HTTP " +
-                                res.status +
-                                " dari GAS. URL belum di-deploy dgn doPost " +
-                                "atau akses blm 'Anyone'.",
-                        );
-                    }
-
-                    let result;
-                    try {
-                        result = await res.json();
-                    } catch (e) {
-                        throw new Error(
-                            "Respon GAS bukan JSON. URL salah / belum deploy.",
-                        );
-                    }
-
-                    if (result.status === "success") {
-                        statusDiv.innerText = "✅ " + result.message;
-                        statusDiv.style.color = "#16a34a";
-
-                        inputBrand.value = "";
-                        inputVarian.value = "";
-                        inputHarga.value = "";
-                        volumeCustom.value = "";
-                        document.getElementById("keterangan").value = "";
-                        volumeRadios[0].checked = true;
-                        volumeRadios.forEach((r) => {
-                            const item = r.closest(".radio-item");
-                            if (item)
-                                item.classList.toggle("checked", r.checked);
+                    for (const payload of cart) {
+                         const res = await fetch(GAS_API_URL, {
+                            method: "POST",
+                            headers: { "Content-Type": "text/plain;charset=utf-8" },
+                            body: JSON.stringify(payload),
                         });
-                        ketRadios.forEach((r) => {
-                            r.checked = false;
-                            const item = r.closest(".radio-item");
-                            if (item) item.classList.remove("checked");
-                        });
-                        hargaPatokan = null;
-                        updateIconHarga();
-
-                        inputBrand.focus();
-                    } else {
-                        throw new Error(result.message);
+                        if (!res.ok) throw new Error("Gagal kirim: " + payload.varian);
                     }
+                    statusDiv.innerText = "✅ Semua data tersimpan!";
+                    cart = [];
+                    renderCart();
+                    // Reset form
+                    inputBrand.value = ""; inputVarian.value = ""; inputHarga.value = ""; 
                 } catch (err) {
                     statusDiv.innerText = "❌ Gagal: " + err.message;
-                    statusDiv.style.color = "#dc2626";
                 } finally {
                     btnSubmit.disabled = false;
-                    btnSubmit.innerText = "Simpan Data";
+                    btnSubmit.innerText = "Simpan Semua";
                 }
             });
 
