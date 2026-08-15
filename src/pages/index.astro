@@ -870,7 +870,8 @@ const GAS_API_URL =
                     
                 try {
                     for (const payload of cart) {
-                         const res = await fetch(GAS_API_URL, {
+                         const res = console.log('Sending:', payload);
+                        await fetch(GAS_API_URL, {
                             method: "POST",
                             headers: { "Content-Type": "text/plain;charset=utf-8" },
                             body: JSON.stringify(payload),
@@ -947,6 +948,7 @@ const GAS_API_URL =
 
                 try {
                     for (const payload of cart) {
+                        console.log('Sending:', payload);
                         await fetch(GAS_API_URL, {
                             method: "POST",
                             headers: { "Content-Type": "text/plain;charset=utf-8" },
