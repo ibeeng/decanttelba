@@ -1,23 +1,9 @@
 // ============================================================
-//  GAS BACKEND - TELBA Decant (copy-paste utuh ke Apps Script)
-//
-//  PENTING:
-//  1. Isi SHEET_ID di bawah dengan ID Google Sheet lu.
-//     Cara ambil: buka Sheet -> URL-nya
-//     https://docs.google.com/spreadsheets/d/INI_ID_NYA/edit
-//     Copy bagian INI_ID_NYA (antara /d/ dan /edit).
-//  2. Deploy: Deploy > New deployment (BUKAN edit yg lama!)
-//       - Description: bebas
-//       - Execute as: Me
-//       - Who has access: Anyone   <-- WAJIB supaya fetch dari browser jalan
-//     Nanti Google kasih URL BARU (token beda dari sebelumnya).
-//     Copy URL BARU itu ke GAS_API_URL di index.astro.
+//  GAS BACKEND - TELBA Decant (Updated with Analytics)
 // ============================================================
 
-// ===== ISI ID SHEET LU DI SINI =====
-var SHEET_ID = ""; // <- tempel ID sheet antar tanda kutip, misal: "1A2b3C..."
+var SHEET_ID = ""; // <- tempel ID sheet lu di sini
 
-// Helper buka spreadsheet: pakai ID kalau diisi, else active (bound script)
 function getSS() {
   if (SHEET_ID && SHEET_ID.length > 5) {
     return SpreadsheetApp.openById(SHEET_ID);
@@ -25,22 +11,27 @@ function getSS() {
   return SpreadsheetApp.getActiveSpreadsheet();
 }
 
-// Helper balikin JSON
 function responseJSON(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ---------- GET: ambil database produk ----------
 function doGet(e) {
+  var action = e.parameter.action;
+  if (action === "getDatabase") {
+    return handleGetDatabase();
+  } else if (action === "getTransactions") {
+    return handleGetTransactions();
+  }
+  // Default to database for backward compatibility
   return handleGetDatabase();
 }
 
 function handleGetDatabase() {
   var ss;
-  try { ss = getSS(); } catch (e) { return responseJSON({}); }
-  if (!ss) return responseJSON({});
+  try { ss = getSS(); } catch (e) { return responseJSON({status: "error", message: e.toString()}); }
+  if (!ss) return responseJSON({status: "error", message: "SS not found"});
 
   var sheetDb = ss.getSheetByName("Database");
   if (!sheetDb) return responseJSON({});
@@ -48,7 +39,6 @@ function handleGetDatabase() {
   var lastRow = sheetDb.getLastRow();
   if (lastRow < 2) return responseJSON({});
 
-  // A:Brand  B:Varian  C:Harga 5ml  D:Harga 10ml
   var data = sheetDb.getRange(2, 1, lastRow - 1, 4).getValues();
   var db = {};
 
@@ -65,7 +55,32 @@ function handleGetDatabase() {
   return responseJSON(db);
 }
 
-// ---------- POST: simpan penjualan ----------
+function handleGetTransactions() {
+  var ss;
+  try { ss = getSS(); } catch (e) { return responseJSON([]); }
+  var sheetTrx = ss.getSheetByName("Penjualan");
+  if (!sheetTrx) return responseJSON([]);
+
+  var lastRow = sheetTrx.getLastRow();
+  if (lastRow < 2) return responseJSON([]);
+
+  var data = sheetTrx.getRange(2, 1, lastRow - 1, 8).getValues();
+  var transactions = data.map(function(row) {
+    return {
+      tanggal: row[0],
+      brand: row[1],
+      varian: row[2],
+      volume: row[3],
+      harga: row[4],
+      ket: row[5],
+      sumber: row[6],
+      keterangan: row[7]
+    };
+  });
+  
+  return responseJSON(transactions);
+}
+
 function doPost(e) {
   try {
     var payload;
@@ -85,13 +100,18 @@ function doPost(e) {
       sheetTrx = ss.insertSheet("Penjualan");
       sheetTrx.appendRow([
         "Tanggal", "Brand", "Brand and varian", "Volume (ml)",
-        "Harga jual", "Ket.", "Sumber"
+        "Harga jual", "Ket.", "Sumber", "Keterangan"
       ]);
     }
 
-    // Urutan kolom sheet Penjualan:
-    // A:Tanggal  B:Brand  C:Brand and varian  D:Volume (ml)
-    // E:Harga jual  F:Ket.  G:Sumber
+    var existingHeaders = sheetTrx.getRange(1, 1, 1, sheetTrx.getLastColumn()).getValues()[0];
+    var hasKeterangan = existingHeaders.some(function (h) {
+      return String(h).trim().toLowerCase() === "keterangan";
+    });
+    if (!hasKeterangan) {
+      sheetTrx.appendRow(existingHeaders.concat(["Keterangan"]));
+    }
+
     sheetTrx.appendRow([
       payload.tanggal || "",
       payload.brand || "",
@@ -99,7 +119,8 @@ function doPost(e) {
       payload.volume || "",
       payload.harga || "",
       payload.ket || "",
-      payload.sumber || ""
+      payload.sumber || "",
+      payload.keterangan || ""
     ]);
 
     return responseJSON({ status: "success", message: "Data tersimpan" });
