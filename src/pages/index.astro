@@ -520,6 +520,15 @@ const GAS_API_URL =
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
             </button>
         </nav>
+        <div id="cartSection" style="display:none; background:var(--surface); padding:12px 20px; border-bottom:1px solid var(--line); position:sticky; top:65px; z-index:45;">
+            <div style="max-width:1000px; margin:0 auto; display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-weight:600; color:var(--chocolate); font-size:0.95rem;">
+                    Keranjang (<span id="cartCount">0</span>)
+                </div>
+                <div id="cartList" style="display:flex; gap:8px; overflow-x:auto; max-width:70vw; padding:4px 0; align-items:center;">
+                </div>
+            </div>
+        </div>
         <div class="layout">
             <aside class="sidebar">
                 <div class="sidebar-brand"><span class="dot"></span>TELBA</div>
