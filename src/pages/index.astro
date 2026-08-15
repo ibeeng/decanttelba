@@ -892,6 +892,15 @@ const GAS_API_URL =
             });
 
             
+            
+            window.onerror = function(message, source, lineno, colno, error) {
+               console.error("Global Error:", message, "at", source, lineno);
+               // Also visually alert the user if it's really stuck
+               if (document.getElementById("loadingOverlay").style.display !== "none") {
+                   alert("Error loading: " + message);
+               }
+            };
+
             const cartHeaderBtn = document.getElementById("cartHeaderBtn");
             const cartHeaderBadge = document.getElementById("cartHeaderBadge");
             const cartDrawerList = document.getElementById("cartDrawerList");
