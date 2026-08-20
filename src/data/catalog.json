@@ -1,0 +1,296 @@
+[
+  {
+    "brand": "MYKONOS",
+    "varian": "SANSA",
+    "harga5ml": 35000,
+    "harga10ml": 55000
+  },
+  {
+    "brand": "MYKONOS",
+    "varian": "UTHOPIA",
+    "harga5ml": 40000,
+    "harga10ml": 75000
+  },
+  {
+    "brand": "MYKONOS",
+    "varian": "SPARKLING ROSE",
+    "harga5ml": 35000,
+    "harga10ml": 55000
+  },
+  {
+    "brand": "MYKONOS",
+    "varian": "ENCHANTED",
+    "harga5ml": 40000,
+    "harga10ml": 75000
+  },
+  {
+    "brand": "MYKONOS",
+    "varian": "CONQOUER",
+    "harga5ml": 65000,
+    "harga10ml": 125000
+  },
+  {
+    "brand": "MYKONOS",
+    "varian": "CALIFORNIA",
+    "harga5ml": 55000,
+    "harga10ml": 100000
+  },
+  {
+    "brand": "MYKONOS",
+    "varian": "GLITCH",
+    "harga5ml": 55000,
+    "harga10ml": 110000
+  },
+  {
+    "brand": "MYKONOS",
+    "varian": "MONACO ROYALE",
+    "harga5ml": 60000,
+    "harga10ml": 120000
+  },
+  {
+    "brand": "MYKONOS",
+    "varian": "DREAMSCAPE",
+    "harga5ml": 55000,
+    "harga10ml": 100000
+  },
+  {
+    "brand": "MYKONOS",
+    "varian": "PENTHOUSE",
+    "harga5ml": 60000,
+    "harga10ml": 110000
+  },
+  {
+    "brand": "OCTARINE",
+    "varian": "BOUJEE FLUFF",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "OCTARINE",
+    "varian": "SANCTUM ARCANUM",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "OCTARINE",
+    "varian": "NOCTIS OBSCURA",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "OCTARINE",
+    "varian": "ELIXIR HOMME",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "OCTARINE",
+    "varian": "BLUE MOTION",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "OCTARINE",
+    "varian": "ELIXIR ONE",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "DASH FELIX",
+    "varian": "REBEL",
+    "harga5ml": 35000,
+    "harga10ml": 65000
+  },
+  {
+    "brand": "DASH FELIX",
+    "varian": "VANILLA ALTAJIR",
+    "harga5ml": 35000,
+    "harga10ml": 65000
+  },
+  {
+    "brand": "DASH FELIX",
+    "varian": "MOSCOW ICE",
+    "harga5ml": 35000,
+    "harga10ml": 65000
+  },
+  {
+    "brand": "HMNS",
+    "varian": "THE PERFECTION",
+    "harga5ml": 35000,
+    "harga10ml": 65000
+  },
+  {
+    "brand": "HMNS",
+    "varian": "SORE ETHERNA",
+    "harga5ml": 35000,
+    "harga10ml": 65000
+  },
+  {
+    "brand": "HMNS",
+    "varian": "FARMHAMPTON",
+    "harga5ml": 35000,
+    "harga10ml": 65000
+  },
+  {
+    "brand": "HMNS",
+    "varian": "UNTITLED",
+    "harga5ml": 35000,
+    "harga10ml": 65000
+  },
+  {
+    "brand": "HMNS",
+    "varian": "EON",
+    "harga5ml": 35000,
+    "harga10ml": 65000
+  },
+  {
+    "brand": "TELBA",
+    "varian": "FH-01",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "TELBA",
+    "varian": "UT-02",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "TELBA",
+    "varian": "RD-33",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "TELBA",
+    "varian": "SC-04",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "TELBA",
+    "varian": "VC-03",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "TELBA",
+    "varian": "EC-04",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "TELBA",
+    "varian": "CA-05",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "TELBA",
+    "varian": "NF-06",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "TELBA",
+    "varian": "SG-07",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "TELBA",
+    "varian": "VB-08",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "TELBA",
+    "varian": "DS-09",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "TELBA",
+    "varian": "DE-10",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "TELBA",
+    "varian": "MA-11",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "TELBA",
+    "varian": "B0-12",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "TELBA",
+    "varian": "NA-13",
+    "harga5ml": 20000,
+    "harga10ml": 35000
+  },
+  {
+    "brand": "SCARLETT",
+    "varian": "CARAMEL LATTE",
+    "harga5ml": 25000,
+    "harga10ml": 45000
+  },
+  {
+    "brand": "SCARLETT",
+    "varian": "DREAMY",
+    "harga5ml": 25000,
+    "harga10ml": 45000
+  },
+  {
+    "brand": "SCARLETT",
+    "varian": "SAHARA MIRAGE",
+    "harga5ml": 25000,
+    "harga10ml": 45000
+  },
+  {
+    "brand": "SCARLETT",
+    "varian": "COTTON HUG",
+    "harga5ml": 25000,
+    "harga10ml": 45000
+  },
+  {
+    "brand": "SCARLETT",
+    "varian": "BIRU SAMUDERA",
+    "harga5ml": 25000,
+    "harga10ml": 45000
+  },
+  {
+    "brand": "SCARLETT",
+    "varian": "VELVET ROUGE",
+    "harga5ml": 25000,
+    "harga10ml": 45000
+  },
+  {
+    "brand": "SCARLETT",
+    "varian": "WONDERLAND",
+    "harga5ml": 25000,
+    "harga10ml": 45000
+  },
+  {
+    "brand": "VELIXIR",
+    "varian": "APOLLO",
+    "harga5ml": 45000,
+    "harga10ml": 85000
+  },
+  {
+    "brand": "VELIXIR",
+    "varian": "KING ICARUS",
+    "harga5ml": 65000,
+    "harga10ml": 130000
+  },
+  {
+    "brand": "VELIXIR",
+    "varian": "GALATEA",
+    "harga5ml": 50000,
+    "harga10ml": 100000
+  }
+]
