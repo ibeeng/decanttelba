@@ -1,9 +1,5 @@
 {
-<<<<<<< HEAD
-  "name": "media-waalidperfume-new-volume-telba-decanttelba",
-=======
   "name": "media-waalidperfume-new-volume-telba-qasirku",
->>>>>>> master
   "type": "module",
   "version": "0.0.1",
   "engines": {
@@ -16,14 +12,8 @@
     "astro": "astro"
   },
   "dependencies": {
-<<<<<<< HEAD
-    "astro": "^7.2.1"
-  }
-}
-=======
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.2.1",
     "tailwindcss": "^4.3.3"
   }
 }
->>>>>>> master
