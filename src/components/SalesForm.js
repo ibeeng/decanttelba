@@ -1,7 +1,7 @@
 import {
   getState, addToCart, getBrands, getVariants, findItem, priceFor, setToast,
 } from "../utils/store.js";
-import { formatRupiah, formatNumber } from "../utils/currency.js";
+import { formatRupiah } from "../utils/currency.js";
 import { escapeHtml, h } from "../utils/dom.js";
 
 const TIPE = [
@@ -19,28 +19,31 @@ export function SalesForm() {
   const root = h(`<div id="sales-root"></div>`);
   let tipe = "Decant";
   let volume = 5;
+  let isCustom = false; // true kalau user pilih chip "Custom"
   let brand = "";
   let varian = "";
   let harga = "";
 
-  function presetsHtml() {
-    const ps = PRESETS[tipe];
+  function volChipsHtml() {
+    const std = PRESETS[tipe];
     if (tipe === "Preloved") {
-      return `<div class="text-xs text-slate-500">Estimasi sisa volume (ml) — input manual di bawah.</div>`;
+      // Preloved: sisa volume bebas -> langsung custom
+      return `<div class="text-[11px] text-slate-500">Estimasi sisa volume (ml) — atur di bawah.</div>`;
     }
-    return ps
+    const chips = std
       .map(
-        (v) => `<button type="button" data-vol="${v}" class="vol-btn rounded-lg py-1.5 px-2 text-xs font-semibold border ${volume === v ? "bg-sky-600 border-sky-600 text-white" : "bg-white border-slate-300 text-slate-700 hover:border-sky-500"}">${v} ml</button>`
+        (v) => `<button type="button" data-vol="${v}" class="vol-chip rounded-full py-1.5 px-3 text-xs font-semibold border ${!isCustom && volume === v ? "bg-sky-600 border-sky-600 text-white" : "bg-white border-slate-300 text-slate-700 hover:border-sky-500"}">${v} ml</button>`
       )
       .join("");
+    const customBtn = `<button type="button" data-vol="custom" class="vol-chip rounded-full py-1.5 px-3 text-xs font-semibold border ${isCustom ? "bg-sky-600 border-sky-600 text-white" : "bg-white border-slate-300 text-slate-700 hover:border-sky-500"}">Custom</button>`;
+    return `<div class="flex flex-wrap gap-1.5">${chips}${customBtn}</div>`;
   }
 
-  // Preset cepat diambil dari katalog Sheet (bukan hardcode) —
-  // ambil 3 item pertama yang harganya sudah ada, biar selalu sinkron.
+  // Preset cepat diambil dari katalog Sheet (bukan hardcode) — ambil 3 item pertama.
   function presetCatalogHtml() {
     const items = getState().catalog.filter((c) => c.harga5ml > 0).slice(0, 3);
     if (!items.length) {
-      return `<div class="col-span-3 text-[11px] text-slate-400">Katalog belum termuat…</div>`;
+      return `<div class="text-[11px] text-slate-400">Katalog belum termuat…</div>`;
     }
     return items
       .map(
@@ -53,6 +56,29 @@ export function SalesForm() {
       .join("");
   }
 
+  function tipeTabsHtml() {
+    return `
+      <div class="flex gap-1 rounded-lg bg-slate-100 p-1" id="tipeProdukGroup">
+        ${TIPE.map(
+          (t) => `<button type="button" data-tipe="${t.key}" class="tipe-tab flex-1 py-1.5 px-2 text-xs font-semibold rounded-md transition ${tipe === t.key ? "bg-white text-sky-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}">
+            <span>${t.key}</span>
+          </button>`
+        ).join("")}
+      </div>
+      <p class="text-[10px] text-slate-400 mt-0.5">${TIPE.find((t) => t.key === tipe).sub}</p>`;
+  }
+
+  function customVolHtml() {
+    if (!isCustom && tipe !== "Preloved") return "";
+    const val = isCustom ? volume : (volume && ![5, 10].includes(volume) ? volume : "");
+    return `
+      <div class="flex items-center gap-2 mt-2">
+        <button type="button" id="vol-minus" class="w-8 h-8 shrink-0 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:border-sky-500">−</button>
+        <input type="number" id="f-volume" value="${val}" placeholder="ml" min="1" class="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500 text-center font-semibold bg-white" />
+        <button type="button" id="vol-plus" class="w-8 h-8 shrink-0 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:border-sky-500">+</button>
+      </div>`;
+  }
+
   function render() {
     const brands = getBrands();
     root.innerHTML = `
@@ -62,24 +88,19 @@ export function SalesForm() {
           <button type="button" id="reset-form" class="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1"><i class="fa-solid fa-rotate-left"></i> Reset Form</button>
         </div>
 
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Preset Katalog Cepat:</label>
-          <div class="grid grid-cols-3 gap-2" id="preset-catalog">${presetCatalogHtml()}</div>
+        <!-- Preset collapsible -->
+        <div class="rounded-xl border border-slate-200 overflow-hidden">
+          <button type="button" id="preset-toggle" class="w-full flex items-center justify-between px-3 py-2 bg-slate-50 text-xs font-semibold text-slate-700 hover:bg-slate-100">
+            <span><i class="fa-solid fa-bolt text-amber-500 mr-1"></i> Preset Katalog Cepat</span>
+            <i class="fa-solid fa-chevron-down text-slate-400 transition-transform" id="preset-chev"></i>
+          </button>
+          <div id="preset-body" class="p-3 grid grid-cols-3 gap-2 hidden">${presetCatalogHtml()}</div>
         </div>
 
         <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
           <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5"><i class="fa-solid fa-boxes-packing text-sky-600"></i> 1. Detail Produk & Tipe Jualan</span>
 
-          <div>
-            <label class="block text-[11px] font-bold text-slate-700 mb-1">Jenis / Tipe Jualan <span class="text-rose-500">*</span></label>
-            <div class="grid grid-cols-3 gap-1.5" id="tipeProdukGroup">
-              ${TIPE.map((t) => `
-                <button type="button" data-tipe="${t.key}" class="tipe-btn py-1.5 px-2 text-xs font-semibold rounded-lg border ${tipe === t.key ? "active-tipe" : "border-slate-300 bg-white text-slate-700 hover:border-sky-500"} flex flex-col items-center justify-center gap-0.5">
-                  <span>${t.icon} ${t.key}</span>
-                  <span class="text-[9px] font-normal ${tipe === t.key ? "opacity-90" : "text-slate-400"}">${t.sub}</span>
-                </button>`).join("")}
-            </div>
-          </div>
+          ${tipeTabsHtml()}
 
           <div class="grid grid-cols-2 gap-2">
             <div>
@@ -95,15 +116,9 @@ export function SalesForm() {
           </div>
 
           <div>
-            <div class="flex justify-between items-center mb-1">
-              <label class="block text-[11px] font-semibold text-slate-600">Ukuran Volume ${tipe === "Preloved" ? "(Sisa)" : "(ml)"}</label>
-              <span class="text-[10px] text-slate-500 font-mono">Input: <span class="font-bold text-sky-600" id="volValText">${volume} ml</span></span>
-            </div>
-            <div class="grid grid-cols-6 gap-1 mb-1.5" id="volumeToggleGroup">${presetsHtml()}</div>
-            <div class="relative">
-              <input type="number" id="f-volume" value="${volume}" placeholder="Atau ketik volume kustom (ml)..." class="w-full text-xs px-2.5 py-1 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500 bg-white" />
-              <span class="absolute right-2.5 top-1.5 text-[10px] text-slate-400">ml</span>
-            </div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Ukuran Volume ${tipe === "Preloved" ? "(Sisa)" : "(ml)"}</label>
+            <div id="volumeChipGroup">${volChipsHtml()}</div>
+            <div id="customVolWrap">${customVolHtml()}</div>
           </div>
 
           <div class="grid grid-cols-3 gap-2">
@@ -124,7 +139,11 @@ export function SalesForm() {
       </section>`;
 
     // wiring
-    root.querySelector("#reset-form").onclick = () => { brand = ""; varian = ""; harga = ""; volume = 5; tipe = "Decant"; setMeta({ tanggalManual: false }); render(); };
+    root.querySelector("#reset-form").onclick = () => {
+      brand = ""; varian = ""; harga = ""; volume = 5; isCustom = false; tipe = "Decant";
+      setMeta({ tanggalManual: false });
+      render();
+    };
     root.querySelector("#f-brand").addEventListener("input", (e) => { brand = e.target.value; refreshVariants(); });
     root.querySelector("#f-varian").addEventListener("input", (e) => {
       varian = e.target.value;
@@ -135,36 +154,60 @@ export function SalesForm() {
       }
       autoPrice();
     });
-    root.querySelector("#f-volume").addEventListener("input", (e) => {
-      volume = parseInt(e.target.value, 10) || 0;
-      const vt = root.querySelector("#volValText"); if (vt) vt.textContent = `${volume} ml`;
-      autoPrice();
-    });
-    root.querySelector("#f-harga").addEventListener("input", (e) => { harga = e.target.value; updateSub(); });
-    root.querySelector("#f-qty").addEventListener("input", updateSub);
+    root.querySelector("#f-harga").addEventListener("input", (e) => { harga = e.target.value; });
+    root.querySelector("#f-qty").addEventListener("input", () => {});
 
-    root.querySelectorAll(".tipe-btn").forEach((b) =>
+    // collapsible preset
+    const presetBody = root.querySelector("#preset-body");
+    const chev = root.querySelector("#preset-chev");
+    root.querySelector("#preset-toggle").onclick = () => {
+      const hidden = presetBody.classList.toggle("hidden");
+      chev.style.transform = hidden ? "" : "rotate(180deg)";
+    };
+
+    // tipe tabs
+    root.querySelectorAll(".tipe-tab").forEach((b) =>
       b.addEventListener("click", () => {
         tipe = b.getAttribute("data-tipe");
+        isCustom = false;
         volume = tipe === "Preloved" ? 5 : (PRESETS[tipe][0] || 5);
         harga = "";
         render();
       })
     );
-    root.querySelectorAll(".vol-btn").forEach((b) =>
+
+    // volume chips
+    root.querySelectorAll(".vol-chip").forEach((b) =>
       b.addEventListener("click", () => {
-        volume = parseInt(b.getAttribute("data-vol"), 10);
-        const vi = root.querySelector("#f-volume"); if (vi) vi.value = volume;
-        const vt = root.querySelector("#volValText"); if (vt) vt.textContent = `${volume} ml`;
-        autoPrice(); render();
+        const v = b.getAttribute("data-vol");
+        if (v === "custom") { isCustom = true; }
+        else { isCustom = false; volume = parseInt(v, 10); }
+        const inp = root.querySelector("#f-volume"); if (inp) inp.value = isCustom ? (volume && ![5,10].includes(volume) ? volume : "") : volume;
+        autoPrice();
+        render();
       })
     );
+
+    // custom vol +/- and input
+    const volInput = root.querySelector("#f-volume");
+    if (volInput) {
+      volInput.addEventListener("input", (e) => {
+        volume = parseInt(e.target.value, 10) || 0;
+        autoPrice();
+      });
+    }
+    const vMinus = root.querySelector("#vol-minus");
+    const vPlus = root.querySelector("#vol-plus");
+    if (vMinus) vMinus.onclick = () => { volume = Math.max(1, (parseInt(volInput.value,10)||1) - 1); volInput.value = volume; autoPrice(); };
+    if (vPlus) vPlus.onclick = () => { volume = (parseInt(volInput.value,10)||0) + 1; volInput.value = volume; autoPrice(); };
+
+    // preset buttons
     root.querySelectorAll(".preset-btn").forEach((b) =>
       b.addEventListener("click", () => {
         const items = getState().catalog.filter((c) => c.harga5ml > 0).slice(0, 3);
         const p = items[parseInt(b.getAttribute("data-preset"), 10)];
         if (!p) return;
-        tipe = "Decant"; volume = 5; brand = p.brand; varian = p.varian; harga = String(p.harga5ml);
+        tipe = "Decant"; isCustom = false; volume = 5; brand = p.brand; varian = p.varian; harga = String(p.harga5ml);
         render();
       })
     );
@@ -175,11 +218,6 @@ export function SalesForm() {
   function refreshVariants() {
     const dl = root.querySelector("#varian-list");
     if (dl) dl.innerHTML = getVariants(brand).map((v) => `<option value="${escapeHtml(v)}">`).join("");
-  }
-  function updateSub() {
-    const qty = parseInt(root.querySelector("#f-qty").value, 10) || 1;
-    const sub = (Number(harga) || 0) * qty;
-    // show in volValText area as subtotal hint (keep simple)
   }
   function autoPrice() {
     const known = findItem(brand, varian);
