@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KasirPenjualan+ | Sistem Kasir Google Sheets</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-receipt, #printable-receipt * {
+                visibility: visible;
+            }
+            #printable-receipt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 10px;
+            }
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+        }
+        /* Custom scrollbar for transaction table */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="h-full font-sans text-slate-800 antialiased flex flex-col bg-slate-100 min-h-screen">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-sky-200">
+                        <i class="fa-solid fa-cash-register"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg text-slate-900 leading-tight">KasirPenjualan<span class="text-sky-600">+</span></h1>
+                        <p class="text-xs text-slate-500">Google Spreadsheet Integration POS</p>
+                    </div>
+                </div>
+
+                <!-- Web App Script Settings & Status Indicator -->
+                <div class="flex items-center space-x-3">
+                    <div id="connectionStatus" class="hidden sm:flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse mr-2"></span>
+                        <span id="connectionStatusText">Mode Simulasi (Lokal)</span>
+                    </div>
+
+                    <button onclick="toggleSettingsModal()" class="inline-flex items-center space-x-2 px-3 py-2 border border-slate-300 shadow-sm text-xs font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition">
+                        <i class="fa-solid fa-plug text-sky-600"></i>
+                        <span class="hidden md:inline">Koneksi Spreadsheet</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Quick Stats Widget Row -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500">Total Penjualan Hari Ini</p>
+                    <p id="statTotalOmset" class="text-lg sm:text-xl font-bold text-slate-900 mt-1">Rp 0</p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <i class="fa-solid fa-wallet text-lg"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500">Jumlah Transaksi</p>
+                    <p id="statTotalCount" class="text-lg sm:text-xl font-bold text-slate-900 mt-1">0 Transaksi</p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+                    <i class="fa-solid fa-receipt text-lg"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500">Sumber Terbanyak</p>
+                    <p id="statTopSource" class="text-lg sm:text-xl font-bold text-slate-900 mt-1">-</p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <i class="fa-solid fa-chart-pie text-lg"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500">Status Sync</p>
+                    <p id="statSyncStatus" class="text-sm font-bold text-emerald-600 mt-1">Aktif & Ready</p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- LEFT PANEL: Input Form Kasir & Keranjang (5/12) -->
+            <section class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-cart-plus text-sky-600"></i> Form Tambah Item & Keranjang
+                    </h2>
+                    <button type="button" onclick="resetForm()" class="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1">
+                        <i class="fa-solid fa-rotate-left"></i> Reset Form
+                    </button>
+                </div>
+
+                <!-- Catalog Quick Select -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Preset Katalog Cepat:</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="selectPreset('Decant', 'MYKONOS', 'SANS', 5, 35000)" class="p-2 text-left bg-slate-50 hover:bg-sky-50 hover:border-sky-300 border border-slate-200 rounded-lg transition text-xs">
+                            <span class="font-semibold block truncate">Mykonos Sans</span>
+                            <span class="text-sky-600 text-[10px] block truncate font-medium">🧪 Decant • 5ml</span>
+                            <span class="text-sky-700 font-bold text-[11px]">Rp 35.000</span>
+                        </button>
+                        <button type="button" onclick="selectPreset('Decant', 'HMNS', 'THE PERFECTION', 10, 65000)" class="p-2 text-left bg-emerald-50/60 hover:bg-emerald-100/80 border border-emerald-200 rounded-lg transition text-xs">
+                            <span class="font-semibold block truncate text-emerald-900">HMNS Perfection</span>
+                            <span class="text-emerald-600 text-[10px] block truncate font-medium">🧪 Decant • 10ml</span>
+                            <span class="text-emerald-800 font-bold text-[11px]">Rp 65.000</span>
+                        </button>
+                        <button type="button" onclick="selectPreset('Decant', 'VELIXIR', 'KING ICARUS', 10, 130000)" class="p-2 text-left bg-amber-50/60 hover:bg-amber-100/80 border border-amber-200 rounded-lg transition text-xs">
+                            <span class="font-semibold block truncate text-amber-900">Velixir King Icarus</span>
+                            <span class="text-amber-700 text-[10px] block truncate font-medium">🧪 Decant • 10ml</span>
+                            <span class="text-amber-800 font-bold text-[11px]">Rp 130.000</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sub-form: Input Item Tunggal (Dynamic Sales Input Module) -->
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                        <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <i class="fa-solid fa-boxes-packing text-sky-600"></i> 1. Detail Produk & Tipe Jualan
+                        </span>
+                        <span class="text-[10px] text-sky-600 font-medium bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+                            <i class="fa-solid fa-sliders mr-1"></i>Dinamis
+                        </span>
+                    </div>
+
+                    <!-- Pilihan Utama: Jenis / Tipe Jualan Produk -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                            Jenis / Tipe Jualan <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="grid grid-cols-3 gap-1.5" id="tipeProdukGroup">
+                            <button type="button" onclick="setTipeProduk('Decant', this)" class="tipe-btn active-tipe py-1.5 px-2 text-xs font-semibold rounded-lg border bg-sky-600 border-sky-600 text-white flex flex-col items-center justify-center gap-0.5 shadow-sm">
+                                <span>🧪 Decant</span>
+                                <span class="text-[9px] font-normal opacity-90">Botol Mini / Sample</span>
+                            </button>
+                            <button type="button" onclick="setTipeProduk('Segel Baru', this)" class="tipe-btn py-1.5 px-2 text-xs font-semibold rounded-lg border border-slate-300 bg-white text-slate-700 hover:border-emerald-500 flex flex-col items-center justify-center gap-0.5">
+                                <span>✨ Segel Baru</span>
+                                <span class="text-[9px] font-normal text-slate-400">Full Bottle BNIB/NIB</span>
+                            </button>
+                            <button type="button" onclick="setTipeProduk('Preloved', this)" class="tipe-btn py-1.5 px-2 text-xs font-semibold rounded-lg border border-slate-300 bg-white text-slate-700 hover:border-amber-500 flex flex-col items-center justify-center gap-0.5">
+                                <span>🔄 Preloved</span>
+                                <span class="text-[9px] font-normal text-slate-400">Partial / Bekas / Sisa</span>
+                            </button>
+                        </div>
+                        <input type="hidden" id="tipeProduk" value="Decant">
+                    </div>
+                    
+                    <!-- Smart Selection: Brand & Varian with Auto-complete / Search Datalist -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Brand <span class="text-rose-500">*</span></label>
+                            <input type="text" id="brand" list="brandOptions" oninput="onBrandChange()" placeholder="Cari / Pilih Brand..." class="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500 bg-white">
+                            <datalist id="brandOptions">
+                                <!-- Loaded dynamically from productCatalog -->
+                            </datalist>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Varian <span class="text-rose-500">*</span></label>
+                            <input type="text" id="varian" list="varianOptions" oninput="onVarianChange()" placeholder="Cari / Pilih Varian..." class="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500 bg-white">
+                            <datalist id="varianOptions">
+                                <!-- Loaded dynamically from productCatalog -->
+                            </datalist>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Volume Selection -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label id="volumeLabelTitle" class="block text-[11px] font-semibold text-slate-600">Ukuran Volume Decant (ml)</label>
+                            <span id="selectedVolumeLabel" class="text-[10px] text-slate-500 font-mono">Input: <span class="font-bold text-sky-600" id="volValText">5 ml</span></span>
+                        </div>
+                        <!-- Toggle Buttons Container -->
+                        <div class="grid grid-cols-6 gap-1 mb-1.5" id="volumeToggleGroup">
+                            <!-- Buttons loaded dynamically via JS -->
+                        </div>
+                        <!-- Custom Manual Input -->
+                        <div class="relative">
+                            <input type="number" id="volume" value="5" placeholder="Atau ketik volume kustom (ml)..." oninput="updateCustomVolumeText()" class="w-full text-xs px-2.5 py-1 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500 bg-white">
+                            <span class="absolute right-2.5 top-1 text-[10px] text-slate-400">ml</span>
+                        </div>
+                    </div>
+
+                    <!-- Row: Qty & Harga Jual Satuan -->
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="col-span-1">
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Qty</label>
+                            <input type="number" id="qty" value="1" min="1" class="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500 text-center font-semibold">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Harga Satuan (Rp) <span class="text-rose-500">*</span></label>
+                            <input type="number" id="hargaJual" placeholder="0" min="0" class="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500 font-semibold text-slate-900">
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="addToCart()" class="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-plus text-sky-400"></i> Masukkan ke Keranjang Belanja
+                    </button>
+                </div>
+
+                <!-- Item List in Cart Container -->
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                    <div class="flex items-center justify-between pb-1.5 border-b border-slate-200">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-basket-shopping text-sky-600 text-xs"></i>
+                            <span class="text-xs font-bold text-slate-700">Keranjang Belanja</span>
+                            <span id="cartCount" class="bg-sky-100 text-sky-700 font-bold text-[10px] px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <span id="cartTotalHeader" class="text-xs font-bold text-sky-600">Rp 0</span>
+                    </div>
+
+                    <!-- Dynamic Item List -->
+                    <div id="cartItemsList" class="space-y-1.5 max-h-44 overflow-y-auto pr-1"></div>
+
+                    <!-- Empty Cart Placeholder -->
+                    <div id="emptyCartText" class="text-center py-3 border border-dashed border-slate-200 rounded-lg text-slate-400 text-xs">
+                        <i class="fa-solid fa-cart-arrow-down text-lg mb-1 block text-slate-300"></i>
+                        <span>Keranjang masih kosong</span>
+                    </div>
+                </div>
+
+                <!-- Sub-form: Detail Transaksi, Pembayaran & Sumber -->
+                <form id="salesForm" onsubmit="handleFormSubmit(event)" class="space-y-3 pt-2 border-t border-slate-100">
+                    <span class="text-xs font-bold text-slate-700 block">2. Data Pembayaran & Sumber Pesanan</span>
+                    
+                    <!-- Date & Source Selector -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Tanggal <span class="text-rose-500">*</span></label>
+                            <input type="datetime-local" id="tanggal" name="tanggal" required class="w-full text-xs px-2 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Ket. Sumber Pesanan <span class="text-rose-500">*</span></label>
+                            <select id="ketSumber" name="ketSumber" required class="w-full text-xs px-2 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500 bg-white font-medium">
+                                <option value="WhatsApp">💬 WhatsApp</option>
+                                <option value="Offline Store">🛍️ Toko Offline</option>
+                                <option value="Tokopedia">💚 Tokopedia</option>
+                                <option value="Shopee">🧡 Shopee</option>
+                                <option value="TikTok Shop">🖤 TikTok Shop</option>
+                                <option value="Instagram">📸 Instagram DM</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method Toggle (Cash / QRIS / Transfer) -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Metode Pembayaran <span class="text-rose-500">*</span></label>
+                        <div class="grid grid-cols-3 gap-1.5" id="paymentMethodGroup">
+                            <button type="button" onclick="setPaymentMethod('Cash', this)" class="pay-btn active-pay py-1.5 px-2 text-xs font-semibold rounded-lg border bg-emerald-600 border-emerald-600 text-white flex items-center justify-center gap-1 shadow-sm">
+                                <i class="fa-solid fa-money-bill-wave"></i> Cash
+                            </button>
+                            <button type="button" onclick="setPaymentMethod('QRIS', this)" class="pay-btn py-1.5 px-2 text-xs font-semibold rounded-lg border border-slate-300 bg-white text-slate-700 hover:border-sky-500 flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-qrcode"></i> QRIS
+                            </button>
+                            <button type="button" onclick="setPaymentMethod('Transfer', this)" class="pay-btn py-1.5 px-2 text-xs font-semibold rounded-lg border border-slate-300 bg-white text-slate-700 hover:border-sky-500 flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-building-columns"></i> Transfer
+                            </button>
+                        </div>
+                        <input type="hidden" id="metodeBayar" value="Cash">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">No. WA Pelanggan</label>
+                            <input type="tel" id="whatsapp" name="whatsapp" placeholder="081234567890" class="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Uang Diterima (Rp)</label>
+                            <input type="number" id="uangBayar" placeholder="0" oninput="calculateChange()" class="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500 font-semibold">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-200 text-xs font-bold">
+                        <span class="text-emerald-800">Kembalian / Status:</span>
+                        <span id="kembalianText" class="text-emerald-700 text-sm">Rp 0</span>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Catatan / Keterangan</label>
+                        <textarea id="keterangan" name="keterangan" rows="1" placeholder="Catatan transaksi..." class="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500"></textarea>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white font-semibold py-2.5 px-4 rounded-xl shadow-md shadow-sky-200 transition duration-150 flex items-center justify-center gap-2 text-xs">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>Simpan & Proses Transaksi</span>
+                    </button>
+                </form>
+            </section>
+
+            <!-- RIGHT PANEL: Table Data Penjualan (7/12) -->
+            <section class="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-sky-600"></i> Riwayat Input Penjualan
+                        </h2>
+                        <p class="text-xs text-slate-500">Data tersimpan lokal & ter-sync ke Google Sheets</p>
+                    </div>
+
+                    <!-- Search & Filter -->
+                    <div class="flex items-center space-x-2">
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Cari brand/varian/WA..." class="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500">
+                        </div>
+                        <button onclick="exportToCSV()" class="p-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 text-xs" title="Export CSV">
+                            <i class="fa-solid fa-file-excel text-emerald-600"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table Container -->
+                <div class="mt-4 flex-1 overflow-x-auto min-h-[320px] max-h-[520px]">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 sticky top-0 z-10">
+                            <tr class="text-[11px] font-semibold text-slate-500 uppercase border-b border-slate-200">
+                                <th class="py-2.5 px-3">Tanggal</th>
+                                <th class="py-2.5 px-3">Item Produk</th>
+                                <th class="py-2.5 px-3 text-right">Total Transaksi</th>
+                                <th class="py-2.5 px-3">Sumber</th>
+                                <th class="py-2.5 px-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionTableBody" class="text-xs divide-y divide-slate-100">
+                            <!-- Rows loaded dynamically -->
+                        </tbody>
+                    </table>
+
+                    <!-- Empty state -->
+                    <div id="emptyState" class="hidden py-12 text-center text-slate-400">
+                        <i class="fa-regular fa-folder-open text-4xl mb-2"></i>
+                        <p class="text-xs font-medium">Belum ada data penjualan tercatat.</p>
+                    </div>
+                </div>
+
+                <!-- Table Footer Info -->
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <span id="recordCountText">Menampilkan 0 data</span>
+                    <span class="text-[11px] bg-slate-100 px-2 py-1 rounded text-slate-600">Auto-save Ready</span>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- SETTINGS MODAL FOR GOOGLE APPS SCRIPT URL -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-gears text-sky-600"></i> Pengaturan Koneksi Google Sheets
+                </h3>
+                <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-600 leading-relaxed">
+                Tempelkan <strong>Web App Webhook URL</strong> dari Google Apps Script yang sudah Anda deploy dari spreadsheet Anda.
+            </p>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Google Apps Script Web App URL:</label>
+                <input type="url" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/AKfycbx.../exec" class="w-full text-xs p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 font-mono">
+            </div>
+
+            <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-[11px] text-amber-800 space-y-1">
+                <p class="font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-circle-info"></i> Petunjuk Singkat Apps Script:
+                </p>
+                <ol class="list-decimal pl-4 space-y-0.5">
+                    <li>Buka Google Sheets Anda &gt; Ekstensi &gt; Apps Script.</li>
+                    <li>Paste kode <code>doPost(e)</code> backend Anda.</li>
+                    <li>Klik <strong>Deploy / Terapkan</strong> &gt; <strong>Web App</strong>.</li>
+                    <li>Atur <i>Who has access / Siapa saja</i> ke <strong>Anyone / Siapa saja</strong>.</li>
+                </ol>
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-2">
+                <button type="button" onclick="toggleSettingsModal()" class="px-4 py-2 border rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-50">Batal</button>
+                <button type="button" onclick="saveScriptUrl()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-semibold shadow-sm">Simpan URL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RECEIPT / STRUK MODAL -->
+    <div id="receiptModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-2">
+                <span class="text-xs font-bold text-slate-500 uppercase">Struk Transaksi Penjualan</span>
+                <button onclick="closeReceiptModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Printable Receipt Content -->
+            <div id="printable-receipt" class="font-mono text-xs text-slate-800 space-y-2 p-3 bg-slate-50 rounded-lg border border-dashed border-slate-300">
+                <div class="text-center pb-2 border-b border-slate-300">
+                    <p class="font-bold text-sm">KASIR PENJUALAN PARFUM</p>
+                    <p class="text-[10px] text-slate-500">Nota Belanja Resmi</p>
+                </div>
+                <div class="text-[10px] space-y-0.5">
+                    <p>Waktu: <span id="rTanggal" class="font-bold"></span></p>
+                    <p>Sumber: <span id="rSumber"></span> | Metode: <span id="rMetode" class="font-bold text-slate-800"></span></p>
+                    <p>WA: <span id="rWA"></span></p>
+                </div>
+                
+                <!-- Receipt Items List -->
+                <div class="border-t border-b border-slate-300 py-2 space-y-1 my-2">
+                    <span class="font-bold text-[10px] block text-slate-600">RINCIAN PEMBELIAN:</span>
+                    <div id="rItemsList" class="space-y-1 text-[11px]">
+                        <!-- Items rendered dynamically -->
+                    </div>
+                </div>
+
+                <div class="pt-1 flex justify-between font-bold text-sm border-t border-slate-300">
+                    <span>TOTAL JUAL:</span>
+                    <span id="rHarga"></span>
+                </div>
+                <div class="text-[10px] space-y-0.5 text-slate-600 pt-1">
+                    <div class="flex justify-between"><span>Diterima:</span><span id="rBayar">Rp 0</span></div>
+                    <div class="flex justify-between font-semibold"><span>Kembalian:</span><span id="rKembalian">Rp 0</span></div>
+                </div>
+                <div class="text-[10px] text-center text-slate-500 pt-2 border-t border-slate-200">
+                    <p>Terima Kasih Telah Berbelanja!</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-2">
+                <button onclick="window.print()" class="w-full py-2 bg-slate-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-print"></i> Cetak Struk
+                </button>
+                <button onclick="sendWA()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1">
+                    <i class="fa-brands fa-whatsapp"></i> Kirim WA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Master Catalog Dataset
+        const productCatalog = [
+            // MYKONOS
+            { brand: "MYKONOS", varian: "SANS", harga5ml: 35000, harga10ml: 55000 },
+            { brand: "MYKONOS", varian: "UTHOPIA", harga5ml: 40000, harga10ml: 75000 },
+            { brand: "MYKONOS", varian: "SPARKLING ROSE", harga5ml: 35000, harga10ml: 55000 },
+            { brand: "MYKONOS", varian: "ENCHANTED", harga5ml: 40000, harga10ml: 75000 },
+            { brand: "MYKONOS", varian: "CONQOUER", harga5ml: 65000, harga10ml: 125000 },
+            { brand: "MYKONOS", varian: "CALIFORNIA", harga5ml: 55000, harga10ml: 100000 },
+            { brand: "MYKONOS", varian: "GLITCH", harga5ml: 55000, harga10ml: 110000 },
+            { brand: "MYKONOS", varian: "MONACO ROYALE", harga5ml: 60000, harga10ml: 120000 },
+            { brand: "MYKONOS", varian: "DREAMSCAPE", harga5ml: 55000, harga10ml: 100000 },
+            { brand: "MYKONOS", varian: "PENTHOUSE", harga5ml: 60000, harga10ml: 110000 },
+
+            // OCTARINE
+            { brand: "OCTARINE", varian: "BOUJEE FLUFF", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "OCTARINE", varian: "SANCTUM ARCANUM", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "OCTARINE", varian: "NOCTIS OBSCURA", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "OCTARINE", varian: "ELIXIR HOMME", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "OCTARINE", varian: "BLUE MOTION", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "OCTARINE", varian: "ELIXIR ONE", harga5ml: 20000, harga10ml: 35000 },
+
+            // DASH FELIX
+            { brand: "DASH FELIX", varian: "REBEL", harga5ml: 35000, harga10ml: 65000 },
+            { brand: "DASH FELIX", varian: "VANILLA ALTAJIR", harga5ml: 35000, harga10ml: 65000 },
+            { brand: "DASH FELIX", varian: "MOSCOW ICE", harga5ml: 35000, harga10ml: 65000 },
+
+            // HMNS
+            { brand: "HMNS", varian: "THE PERFECTION", harga5ml: 35000, harga10ml: 65000 },
+            { brand: "HMNS", varian: "SORE ETHERNA", harga5ml: 35000, harga10ml: 65000 },
+            { brand: "HMNS", varian: "FARMHAMPTON", harga5ml: 35000, harga10ml: 65000 },
+            { brand: "HMNS", varian: "UNTITLED", harga5ml: 35000, harga10ml: 65000 },
+            { brand: "HMNS", varian: "EON", harga5ml: 35000, harga10ml: 65000 },
+
+            // TELBA
+            { brand: "TELBA", varian: "FH-01", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "TELBA", varian: "UT-02", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "TELBA", varian: "RD-33", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "TELBA", varian: "SC-04", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "TELBA", varian: "VC-03", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "TELBA", varian: "EC-04", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "TELBA", varian: "CA-05", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "TELBA", varian: "NF-06", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "TELBA", varian: "SG-07", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "TELBA", varian: "VB-08", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "TELBA", varian: "DS-09", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "TELBA", varian: "DE-10", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "TELBA", varian: "MA-11", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "TELBA", varian: "B0-12", harga5ml: 20000, harga10ml: 35000 },
+            { brand: "TELBA", varian: "NA-13", harga5ml: 20000, harga10ml: 35000 },
+
+            // SCARLETT
+            { brand: "SCARLETT", varian: "CARAMEL LATTE", harga5ml: 25000, harga10ml: 45000 },
+            { brand: "SCARLETT", varian: "DREAMY", harga5ml: 25000, harga10ml: 45000 },
+            { brand: "SCARLETT", varian: "SAHARA MIRAGE", harga5ml: 25000, harga10ml: 45000 },
+            { brand: "SCARLETT", varian: "COTTON HUG", harga5ml: 25000, harga10ml: 45000 },
+            { brand: "SCARLETT", varian: "BIRU SAMUDERA", harga5ml: 25000, harga10ml: 45000 },
+            { brand: "SCARLETT", varian: "VELVET ROUGE", harga5ml: 25000, harga10ml: 45000 },
+            { brand: "SCARLETT", varian: "WONDERLAND", harga5ml: 25000, harga10ml: 45000 },
+
+            // VELIXIR
+            { brand: "VELIXIR", varian: "APOLLO", harga5ml: 45000, harga10ml: 85000 },
+            { brand: "VELIXIR", varian: "KING ICARUS", harga5ml: 65000, harga10ml: 130000 },
+            { brand: "VELIXIR", varian: "GALATEA", harga5ml: 50000, harga10ml: 100000 }
+        ];
+
+        // Product Type Configurations
+        const productTypeConfigs = {
+            'Decant': {
+                volumes: [5, 10],
+                customPlaceholder: 'Atau ketik volume kustom (ml)...',
+                label: 'Ukuran Volume Decant (ml)',
+                btnClass: 'bg-sky-600 border-sky-600 text-white',
+                defaultVol: 5
+            },
+            'Segel Baru': {
+                volumes: [100, 50, 30],
+                customPlaceholder: 'Atau ketik volume kustom (ml)...',
+                label: 'Ukuran Volume Full Bottle (ml)',
+                btnClass: 'bg-emerald-600 border-emerald-600 text-white',
+                defaultVol: 100
+            },
+            'Preloved': {
+                volumes: [],
+                customPlaceholder: 'Ketik estimasi sisa volume/cairan (ml)...',
+                label: 'Estimasi Sisa Volume (ml)',
+                btnClass: 'bg-amber-600 border-amber-600 text-white',
+                defaultVol: 50
+            }
+        };
+
+        // Application State
+        let transactions = JSON.parse(localStorage.getItem('kasir_transactions') || '[]');
+        let scriptUrl = localStorage.getItem('kasir_script_url') || '';
+        let currentCart = [];
+        let selectedPaymentMethod = 'Cash';
+        let currentTipeProduk = 'Decant';
+        let currentReceiptData = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initCatalogDatalists();
+            
+            // Set default date to current local datetime
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('tanggal').value = now.toISOString().slice(0, 16);
+
+            // Initialize default UI views
+            const defaultTipeBtn = document.querySelectorAll('#tipeProdukGroup .tipe-btn')[0];
+            setTipeProduk('Decant', defaultTipeBtn);
+            
+            updateConnectionStatus();
+            renderTable();
+            updateStats();
+        });
+
+        function formatRupiah(number) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(number || 0);
+        }
+
+        function getSourceBadgeClass(source) {
+            switch(source) {
+                case 'Tokopedia': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+                case 'Shopee': return 'bg-amber-100 text-amber-800 border border-amber-200';
+                case 'TikTok Shop': return 'bg-slate-800 text-white';
+                case 'WhatsApp': return 'bg-green-100 text-green-800 border border-green-200';
+                case 'Instagram': return 'bg-pink-100 text-pink-800 border border-pink-200';
+                default: return 'bg-slate-100 text-slate-800 border border-slate-200';
+            }
+        }
+
+        function setTipeProduk(tipe, btnElement) {
+            currentTipeProduk = tipe;
+            document.getElementById('tipeProduk').value = tipe;
+
+            // Highlight active product type button
+            const tipeBtns = document.querySelectorAll('#tipeProdukGroup .tipe-btn');
+            tipeBtns.forEach(btn => {
+                btn.className = "tipe-btn py-1.5 px-2 text-xs font-semibold rounded-lg border border-slate-300 bg-white text-slate-700 hover:border-sky-500 flex flex-col items-center justify-center gap-0.5";
+            });
+
+            if (btnElement) {
+                let activeColorClass = "bg-sky-600 border-sky-600 text-white";
+                if (tipe === 'Segel Baru') activeColorClass = "bg-emerald-600 border-emerald-600 text-white";
+                if (tipe === 'Preloved') activeColorClass = "bg-amber-600 border-amber-600 text-white";
+                btnElement.className = `tipe-btn active-tipe py-1.5 px-2 text-xs font-semibold rounded-lg border ${activeColorClass} flex flex-col items-center justify-center gap-0.5 shadow-sm`;
+            }
+
+            // Update Volume Header & Input Config
+            const config = productTypeConfigs[tipe] || productTypeConfigs['Decant'];
+            document.getElementById('volumeLabelTitle').innerText = config.label;
+            
+            const volumeInput = document.getElementById('volume');
+            volumeInput.placeholder = config.customPlaceholder;
+
+            // Render preset volume toggle buttons
+            renderVolumeToggleButtons(config);
+
+            // Set default volume
+            setVolume(config.defaultVol, null);
+        }
+
+        function renderVolumeToggleButtons(config) {
+            const container = document.getElementById('volumeToggleGroup');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (!config.volumes || config.volumes.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            config.volumes.forEach(vol => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'vol-btn py-1 px-1 text-[11px] font-semibold border rounded-lg bg-white border-slate-300 text-slate-700 hover:border-sky-500 transition text-center';
+                btn.innerText = vol + ' ml';
+                btn.onclick = function() { setVolume(vol, this); };
+                container.appendChild(btn);
+            });
+        }
+
+        function setVolume(vol, btnElement) {
+            document.getElementById('volume').value = vol;
+            document.getElementById('volValText').innerText = vol ? vol + ' ml' : '- ml';
+
+            const buttons = document.querySelectorAll('#volumeToggleGroup .vol-btn');
+            buttons.forEach(b => {
+                b.className = "vol-btn py-1 px-1 text-[11px] font-semibold border rounded-lg bg-white border-slate-300 text-slate-700 hover:border-sky-500 transition text-center";
+            });
+
+            if (btnElement) {
+                const config = productTypeConfigs[currentTipeProduk] || productTypeConfigs['Decant'];
+                btnElement.className = `vol-btn active-vol py-1 px-1 text-[11px] font-semibold border rounded-lg ${config.btnClass} shadow-sm transition text-center`;
+            } else {
+                // If btnElement is null, try finding matching preset button
+                const config = productTypeConfigs[currentTipeProduk] || productTypeConfigs['Decant'];
+                buttons.forEach(b => {
+                    if (b.innerText === vol + ' ml') {
+                        b.className = `vol-btn active-vol py-1 px-1 text-[11px] font-semibold border rounded-lg ${config.btnClass} shadow-sm transition text-center`;
+                    }
+                });
+            }
+
+            autoFillPriceFromCatalog();
+        }
+
+        function updateCustomVolumeText() {
+            const val = document.getElementById('volume').value;
+            document.getElementById('volValText').innerText = val ? val + ' ml' : '- ml';
+            const buttons = document.querySelectorAll('#volumeToggleGroup .vol-btn');
+            buttons.forEach(b => {
+                b.className = "vol-btn py-1 px-1 text-[11px] font-semibold border rounded-lg bg-white border-slate-300 text-slate-700 hover:border-sky-500 transition text-center";
+            });
+            
+            // Clear price if custom volume is typed (unless it matches preset 5ml/10ml)
+            const volNum = parseInt(val) || 0;
+            const hargaInput = document.getElementById('hargaJual');
+            if (volNum !== 5 && volNum !== 10) {
+                hargaInput.value = '';
+            } else {
+                autoFillPriceFromCatalog();
+            }
+        }
+
+        function setPaymentMethod(method, btnElement) {
+            selectedPaymentMethod = method;
+            document.getElementById('metodeBayar').value = method;
+
+            const payBtns = document.querySelectorAll('#paymentMethodGroup .pay-btn');
+            payBtns.forEach(btn => {
+                btn.className = "pay-btn py-1.5 px-2 text-xs font-semibold rounded-lg border border-slate-300 bg-white text-slate-700 hover:border-sky-500 flex items-center justify-center gap-1";
+            });
+
+            if (btnElement) {
+                let activeColor = "bg-emerald-600 border-emerald-600 text-white";
+                if (method === 'QRIS') activeColor = "bg-sky-600 border-sky-600 text-white";
+                if (method === 'Transfer') activeColor = "bg-indigo-600 border-indigo-600 text-white";
+                btnElement.className = `pay-btn active-pay py-1.5 px-2 text-xs font-semibold rounded-lg border ${activeColor} flex items-center justify-center gap-1 shadow-sm`;
+            }
+        }
+
+        function initCatalogDatalists() {
+            const brandDatalist = document.getElementById('brandOptions');
+            const varianDatalist = document.getElementById('varianOptions');
+            if (!brandDatalist || !varianDatalist) return;
+
+            const uniqueBrands = [...new Set(productCatalog.map(item => item.brand))];
+            brandDatalist.innerHTML = uniqueBrands.map(b => `<option value="${b}"></option>`).join('');
+            varianDatalist.innerHTML = productCatalog.map(item => `<option value="${item.varian}">${item.varian} (${item.brand})</option>`).join('');
+        }
+
+        function onBrandChange() {
+            const brandVal = document.getElementById('brand').value.trim().toUpperCase();
+            const varianDatalist = document.getElementById('varianOptions');
+
+            if (brandVal) {
+                const filteredVarians = productCatalog.filter(item => item.brand.toUpperCase() === brandVal);
+                if (filteredVarians.length > 0) {
+                    varianDatalist.innerHTML = filteredVarians.map(item => `<option value="${item.varian}">${item.varian}</option>`).join('');
+                } else {
+                    initCatalogDatalists();
+                }
+            } else {
+                initCatalogDatalists();
+            }
+
+            autoFillPriceFromCatalog();
+        }
+
+        function onVarianChange() {
+            const varianVal = document.getElementById('varian').value.trim().toUpperCase();
+            const brandInput = document.getElementById('brand');
+
+            const match = productCatalog.find(item => item.varian.toUpperCase() === varianVal);
+            if (match) {
+                if (!brandInput.value || brandInput.value.toUpperCase() !== match.brand) {
+                    brandInput.value = match.brand;
+                    onBrandChange();
+                }
+            }
+
+            autoFillPriceFromCatalog();
+        }
+
+        function autoFillPriceFromCatalog() {
+            if (currentTipeProduk !== 'Decant') return;
+
+            const brandVal = document.getElementById('brand').value.trim().toUpperCase();
+            const varianVal = document.getElementById('varian').value.trim().toUpperCase();
+            const volumeVal = parseInt(document.getElementById('volume').value) || 0;
+            const hargaInput = document.getElementById('hargaJual');
+
+            const match = productCatalog.find(item => 
+                item.brand.toUpperCase() === brandVal && 
+                item.varian.toUpperCase() === varianVal
+            );
+
+            if (match) {
+                if (volumeVal === 5 && match.harga5ml) {
+                    hargaInput.value = match.harga5ml;
+                } else if (volumeVal === 10 && match.harga10ml) {
+                    hargaInput.value = match.harga10ml;
+                } else {
+                    // Custom volume typed -> Clear price field for manual input
+                    hargaInput.value = '';
+                }
+            } else {
+                if (volumeVal !== 5 && volumeVal !== 10) {
+                    hargaInput.value = '';
+                }
+            }
+        }
+
+        function selectPreset(tipe, brand, varian, volume, harga) {
+            setTipeProduk(tipe, document.querySelectorAll('#tipeProdukGroup .tipe-btn')[
+                tipe === 'Decant' ? 0 : (tipe === 'Segel Baru' ? 1 : 2)
+            ]);
+            document.getElementById('brand').value = brand;
+            onBrandChange();
+            document.getElementById('varian').value = varian;
+            setVolume(volume, null);
+            document.getElementById('hargaJual').value = harga;
+            document.getElementById('qty').value = 1;
+        }
+
+        function addToCart() {
+            const tipeProduk = document.getElementById('tipeProduk').value || 'Decant';
+            const brand = document.getElementById('brand').value.trim();
+            const varian = document.getElementById('varian').value.trim();
+            const volume = parseInt(document.getElementById('volume').value) || 0;
+            const hargaJual = parseFloat(document.getElementById('hargaJual').value) || 0;
+            const qty = parseInt(document.getElementById('qty').value) || 1;
+
+            if (!brand || !varian || hargaJual <= 0) {
+                alert("Silakan isi Brand, Varian, dan Harga Satuan dengan benar.");
+                return;
+            }
+
+            const item = {
+                id: Date.now() + Math.random(),
+                tipeProduk,
+                brand,
+                varian,
+                volume,
+                hargaJual,
+                qty,
+                subtotal: hargaJual * qty
+            };
+
+            currentCart.push(item);
+            renderCart();
+
+            document.getElementById('brand').value = '';
+            document.getElementById('varian').value = '';
+            document.getElementById('hargaJual').value = '';
+            document.getElementById('qty').value = '1';
+        }
+
+        function removeFromCart(id) {
+            currentCart = currentCart.filter(item => item.id !== id);
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cartItemsList');
+            const emptyText = document.getElementById('emptyCartText');
+            const cartCountElem = document.getElementById('cartCount');
+            const cartTotalHeader = document.getElementById('cartTotalHeader');
+
+            if (!container || !cartCountElem) return;
+
+            cartCountElem.innerText = currentCart.length;
+
+            if (currentCart.length === 0) {
+                container.innerHTML = '';
+                if (emptyText) container.appendChild(emptyText);
+                if (cartTotalHeader) cartTotalHeader.innerText = "Rp 0";
+                calculateChange();
+                return;
+            }
+
+            container.innerHTML = '';
+            let total = 0;
+
+            currentCart.forEach(item => {
+                total += item.subtotal;
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200 text-xs shadow-sm";
+
+                let badgeClass = "bg-sky-100 text-sky-800 border-sky-200";
+                if (item.tipeProduk === 'Segel Baru') badgeClass = "bg-emerald-100 text-emerald-800 border-emerald-200";
+                if (item.tipeProduk === 'Preloved') badgeClass = "bg-amber-100 text-amber-800 border-amber-200";
+
+                div.innerHTML = `
+                    <div class="flex-1 pr-2">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-bold text-slate-800">${item.brand}</span>
+                            <span class="text-[9px] px-1.5 py-0.5 rounded font-semibold border ${badgeClass}">${item.tipeProduk}</span>
+                        </div>
+                        <p class="text-slate-500 text-[10px] truncate">${item.varian} (${item.volume ? item.volume + 'ml' : '-'})</p>
+                        <p class="text-slate-600 text-[11px] font-semibold">${item.qty}x @ ${formatRupiah(item.hargaJual)}</p>
+                    </div>
+                    <div class="text-right flex items-center space-x-2">
+                        <span class="font-bold text-sky-700 text-xs">${formatRupiah(item.subtotal)}</span>
+                        <button type="button" onclick="removeFromCart(${item.id})" class="text-slate-400 hover:text-rose-500 p-1" title="Hapus Item">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            if (cartTotalHeader) cartTotalHeader.innerText = formatRupiah(total);
+            calculateChange();
+        }
+
+        function calculateChange() {
+            const total = currentCart.reduce((sum, item) => sum + item.subtotal, 0);
+            const uangBayar = parseFloat(document.getElementById('uangBayar').value) || 0;
+            const kembalianText = document.getElementById('kembalianText');
+
+            if (!kembalianText) return;
+
+            if (uangBayar <= 0 && total > 0) {
+                kembalianText.innerText = "Rp 0";
+                kembalianText.className = "text-emerald-700 text-sm";
+            } else if (uangBayar >= total) {
+                const kembalian = uangBayar - total;
+                kembalianText.innerText = formatRupiah(kembalian);
+                kembalianText.className = "text-emerald-700 text-sm font-bold";
+            } else {
+                const kurang = total - uangBayar;
+                kembalianText.innerText = `Kurang: ${formatRupiah(kurang)}`;
+                kembalianText.className = "text-rose-600 text-sm font-bold";
+            }
+        }
+
+        function renderTable(data = transactions) {
+            const tbody = document.getElementById('transactionTableBody');
+            const emptyState = document.getElementById('emptyState');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                if (emptyState) emptyState.classList.remove('hidden');
+                document.getElementById('recordCountText').innerText = "Menampilkan 0 data";
+                return;
+            } else {
+                if (emptyState) emptyState.classList.add('hidden');
+            }
+
+            document.getElementById('recordCountText').innerText = `Menampilkan ${data.length} transaksi`;
+
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 border-b border-slate-100 transition";
+
+                let itemsSummary = "";
+
+                if (item.items && item.items.length > 0) {
+                    itemsSummary = item.items.map(i => {
+                        let badgeClass = "bg-sky-100 text-sky-800 border-sky-200";
+                        if (i.tipeProduk === 'Segel Baru') badgeClass = "bg-emerald-100 text-emerald-800 border-emerald-200";
+                        if (i.tipeProduk === 'Preloved') badgeClass = "bg-amber-100 text-amber-800 border-amber-200";
+                        return `<span class="font-semibold text-slate-800">${i.brand}</span> ${i.varian} <span class="text-sky-600 font-medium">(${i.volume ? i.volume + 'ml' : '-'})</span> <span class="text-[9px] px-1.5 py-0.5 rounded font-semibold border ${badgeClass}">${i.tipeProduk || 'Decant'}</span> (${i.qty}x)`;
+                    }).join('<br>');
+                } else {
+                    itemsSummary = `<span class="font-semibold text-slate-800">${item.brand || '-'}</span> ${item.varian || '-'}`;
+                }
+
+                const payBadge = item.metodeBayar ? `<span class="text-[9px] font-mono bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 ml-1 text-slate-600">${item.metodeBayar}</span>` : '';
+
+                tr.innerHTML = `
+                    <td class="py-3 px-3 whitespace-nowrap font-mono text-[11px] text-slate-500">${item.tanggal}</td>
+                    <td class="py-3 px-3 text-xs leading-relaxed">
+                        ${itemsSummary}
+                    </td>
+                    <td class="py-3 px-3 text-right font-bold text-sky-700">${formatRupiah(item.totalHarga || item.hargaJual || 0)} ${payBadge}</td>
+                    <td class="py-3 px-3">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${getSourceBadgeClass(item.ketSumber)}">
+                            ${item.ketSumber}
+                        </span>
+                    </td>
+                    <td class="py-3 px-3 text-center">
+                        <div class="flex items-center justify-center space-x-1">
+                            <button onclick="viewReceipt('${item.id}')" class="p-1.5 text-slate-400 hover:text-sky-600 rounded" title="Struk/Nota">
+                                <i class="fa-solid fa-receipt"></i>
+                            </button>
+                            <button onclick="deleteTransaction('${item.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded" title="Hapus">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterTable() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            if (!query) {
+                renderTable(transactions);
+                return;
+            }
+
+            const filtered = transactions.filter(t => {
+                const matchSource = (t.ketSumber || '').toLowerCase().includes(query);
+                const matchWA = (t.whatsapp || '').toLowerCase().includes(query);
+                const matchItems = t.items && t.items.some(i => 
+                    (i.brand || '').toLowerCase().includes(query) || 
+                    (i.varian || '').toLowerCase().includes(query) ||
+                    (i.tipeProduk || '').toLowerCase().includes(query)
+                );
+                return matchSource || matchWA || matchItems;
+            });
+
+            renderTable(filtered);
+        }
+
+        function deleteTransaction(id) {
+            if (!confirm("Apakah Anda yakin ingin menghapus transaksi ini dari riwayat lokal?")) return;
+            transactions = transactions.filter(t => t.id != id);
+            localStorage.setItem('kasir_transactions', JSON.stringify(transactions));
+            renderTable();
+            updateStats();
+        }
+
+        function updateStats() {
+            const statTotalOmset = document.getElementById('statTotalOmset');
+            const statTotalCount = document.getElementById('statTotalCount');
+            const statTopSource = document.getElementById('statTopSource');
+
+            if (!statTotalOmset || !statTotalCount || !statTopSource) return;
+
+            const totalSum = transactions.reduce((sum, t) => sum + (t.totalHarga || t.hargaJual || 0), 0);
+            statTotalOmset.innerText = formatRupiah(totalSum);
+            statTotalCount.innerText = `${transactions.length} Transaksi`;
+
+            // Calculate top source
+            const sourceCounts = {};
+            transactions.forEach(t => {
+                const src = t.ketSumber || 'Lainnya';
+                sourceCounts[src] = (sourceCounts[src] || 0) + 1;
+            });
+
+            let topSource = '-';
+            let maxCount = 0;
+            for (let src in sourceCounts) {
+                if (sourceCounts[src] > maxCount) {
+                    maxCount = sourceCounts[src];
+                    topSource = src;
+                }
+            }
+            statTopSource.innerText = topSource;
+        }
+
+        function updateConnectionStatus() {
+            const elem = document.getElementById('connectionStatusText');
+            const syncStatus = document.getElementById('statSyncStatus');
+
+            if (scriptUrl) {
+                if (elem) elem.innerText = 'Connected (Google Sheets)';
+                if (syncStatus) {
+                    syncStatus.innerText = 'Online & Synced';
+                    syncStatus.className = 'text-sm font-bold text-emerald-600 mt-1';
+                }
+            } else {
+                if (elem) elem.innerText = 'Mode Simulasi (Lokal)';
+                if (syncStatus) {
+                    syncStatus.innerText = 'Lokal (Belum Connect)';
+                    syncStatus.className = 'text-sm font-bold text-amber-600 mt-1';
+                }
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('brand').value = '';
+            document.getElementById('varian').value = '';
+            document.getElementById('hargaJual').value = '';
+            document.getElementById('qty').value = '1';
+            document.getElementById('uangBayar').value = '';
+            document.getElementById('keterangan').value = '';
+            document.getElementById('whatsapp').value = '';
+            calculateChange();
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+
+            if (currentCart.length === 0) {
+                alert("Keranjang masih kosong! Masukkan minimal 1 item produk terlebih dahulu.");
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const originalBtnHTML = submitBtn.innerHTML;
+
+            const totalHarga = currentCart.reduce((sum, item) => sum + item.subtotal, 0);
+            const uangBayar = parseFloat(document.getElementById('uangBayar').value) || 0;
+
+            const transactionData = {
+                id: Date.now(),
+                tanggal: document.getElementById('tanggal').value.replace('T', ' '),
+                items: [...currentCart],
+                totalHarga: totalHarga,
+                metodeBayar: selectedPaymentMethod,
+                uangBayar: uangBayar,
+                kembalian: uangBayar > totalHarga ? uangBayar - totalHarga : 0,
+                ketSumber: document.getElementById('ketSumber').value,
+                keterangan: document.getElementById('keterangan').value || '-',
+                whatsapp: document.getElementById('whatsapp').value || '-'
+            };
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Mengirim ke Spreadsheet...</span>`;
+
+            if (scriptUrl) {
+                try {
+                    for (let item of transactionData.items) {
+                        const rowPayload = {
+                            id: transactionData.id,
+                            tanggal: transactionData.tanggal,
+                            tipeProduk: item.tipeProduk,
+                            brand: item.brand,
+                            varian: item.varian,
+                            volume: item.volume,
+                            qty: item.qty,
+                            hargaSatuan: item.hargaJual,
+                            hargaJual: item.subtotal,
+                            metodeBayar: transactionData.metodeBayar,
+                            ketSumber: transactionData.ketSumber,
+                            keterangan: transactionData.keterangan,
+                            whatsapp: transactionData.whatsapp
+                        };
+
+                        await fetch(scriptUrl, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(rowPayload)
+                        });
+                    }
+                } catch (err) {
+                    console.warn("Spreadsheet POST network error, saved to local fallback:", err);
+                }
+            }
+
+            transactions.unshift(transactionData);
+            localStorage.setItem('kasir_transactions', JSON.stringify(transactions));
+
+            renderTable();
+            updateStats();
+
+            currentReceiptData = transactionData;
+            openReceiptModal(transactionData);
+
+            currentCart = [];
+            renderCart();
+            resetForm();
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHTML;
+        }
+
+        function openReceiptModal(data) {
+            currentReceiptData = data;
+            document.getElementById('rTanggal').innerText = data.tanggal;
+            document.getElementById('rSumber').innerText = data.ketSumber;
+            document.getElementById('rMetode').innerText = data.metodeBayar || 'Cash';
+            document.getElementById('rWA').innerText = data.whatsapp;
+            document.getElementById('rHarga').innerText = formatRupiah(data.totalHarga || data.hargaJual || 0);
+            document.getElementById('rBayar').innerText = formatRupiah(data.uangBayar || 0);
+            document.getElementById('rKembalian').innerText = formatRupiah(data.kembalian || 0);
+
+            const rItemsContainer = document.getElementById('rItemsList');
+            rItemsContainer.innerHTML = '';
+
+            if (data.items && data.items.length > 0) {
+                data.items.forEach(i => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = "flex justify-between items-start";
+                    itemDiv.innerHTML = `
+                        <div>
+                            <p class="font-semibold text-slate-900">${i.brand} - ${i.varian}</p>
+                            <p class="text-[9px] text-slate-500">${i.tipeProduk || 'Decant'} • ${i.volume ? i.volume + 'ml' : '-'} (${i.qty}x)</p>
+                        </div>
+                        <span class="font-bold text-slate-800 text-[11px]">${formatRupiah(i.subtotal)}</span>
+                    `;
+                    rItemsContainer.appendChild(itemDiv);
+                });
+            } else {
+                rItemsContainer.innerHTML = `<div class="flex justify-between"><p class="font-semibold">${data.brand} - ${data.varian}</p><span>${formatRupiah(data.hargaJual)}</span></div>`;
+            }
+
+            document.getElementById('receiptModal').classList.remove('hidden');
+        }
+
+        function viewReceipt(id) {
+            const data = transactions.find(t => t.id == id);
+            if (data) openReceiptModal(data);
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('receiptModal').classList.add('hidden');
+        }
+
+        function sendWA() {
+            if (!currentReceiptData) return;
+
+            let phone = (currentReceiptData.whatsapp || '').replace(/[^0-9]/g, '');
+            if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+
+            let text = `*NOTA BELANJA KASIR PARFUM*\n`;
+            text += `Waktu: ${currentReceiptData.tanggal}\n`;
+            text += `Metode Pembayaran: ${currentReceiptData.metodeBayar || 'Cash'}\n`;
+            text += `-----------------------------------\n`;
+            text += `*Rincian Pembelian:*\n`;
+
+            if (currentReceiptData.items && currentReceiptData.items.length > 0) {
+                currentReceiptData.items.forEach(i => {
+                    text += `• ${i.brand} - ${i.varian} (${i.tipeProduk || 'Decant'}, ${i.volume ? i.volume + 'ml' : '-'}) x${i.qty} = ${formatRupiah(i.subtotal)}\n`;
+                });
+            } else {
+                text += `• ${currentReceiptData.brand} - ${currentReceiptData.varian} = ${formatRupiah(currentReceiptData.hargaJual)}\n`;
+            }
+
+            text += `-----------------------------------\n`;
+            text += `*TOTAL HASIL:* ${formatRupiah(currentReceiptData.totalHarga || currentReceiptData.hargaJual || 0)}\n`;
+            text += `Terima Kasih Telah Berbelanja!`;
+
+            const encoded = encodeURIComponent(text);
+            const waUrl = phone ? `https://wa.me/${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
+            window.open(waUrl, '_blank');
+        }
+
+        function toggleSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            if (!modal) return;
+            const input = document.getElementById('scriptUrlInput');
+            if (input) input.value = scriptUrl;
+            modal.classList.toggle('hidden');
+        }
+
+        function saveScriptUrl() {
+            const input = document.getElementById('scriptUrlInput');
+            if (!input) return;
+            scriptUrl = input.value.trim();
+            localStorage.setItem('kasir_script_url', scriptUrl);
+            updateConnectionStatus();
+            toggleSettingsModal();
+            alert("URL Google Apps Script berhasil disimpan!");
+        }
+
+        function exportToCSV() {
+            if (transactions.length === 0) {
+                alert("Belum ada data transaksi untuk diexport!");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "ID Transaksi,Tanggal,Tipe Produk,Brand,Varian,Volume (ml),Qty,Harga Satuan,Total Subtotal,Metode Pembayaran,Ket. Sumber,Keterangan,No WhatsApp\n";
+
+            transactions.forEach(t => {
+                if (t.items && t.items.length > 0) {
+                    t.items.forEach(i => {
+                        const row = `"${t.id}","${t.tanggal}","${i.tipeProduk || 'Decant'}","${i.brand}","${i.varian}","${i.volume}","${i.qty}","${i.hargaJual}","${i.subtotal}","${t.metodeBayar || 'Cash'}","${t.ketSumber}","${t.keterangan}","${t.whatsapp}"`;
+                        csvContent += row + "\n";
+                    });
+                } else {
+                    const row = `"${t.id}","${t.tanggal}","Decant","${t.brand}","${t.varian}","${t.volume}","1","${t.hargaJual}","${t.hargaJual}","${t.metodeBayar || 'Cash'}","${t.ketSumber}","${t.keterangan}","${t.whatsapp}"`;
+                    csvContent += row + "\n";
+                }
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Data_Penjualan_Kasir_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>

@@ -1,4 +1,5 @@
 ---
+<<<<<<< HEAD
 const GAS_API_URL =
     "https://script.google.com/macros/s/AKfycbxP5Pteny0gg55v8LQrTqqyzDzcxpDX6trLtRE2XK7_-fu78P1SaZOd8rrSeObzD65zhw/exec";
 ---
@@ -755,3 +756,161 @@ const GAS_API_URL =
         </script>
     </body>
 </html>
+=======
+import Layout from "../layouts/Layout.astro";
+import "../styles/global.css";
+---
+
+<Layout title="KasirPenjualan+ | Sistem Kasir Google Sheets">
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-sky-200">
+            <i class="fa-solid fa-cash-register"></i>
+          </div>
+          <div>
+            <h1 class="font-bold text-lg text-slate-900 leading-tight">KasirPenjualan<span class="text-sky-600">+</span></h1>
+            <p class="text-xs text-slate-500">Google Spreadsheet Integration POS</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-3">
+          <div id="connectionStatus" class="hidden sm:flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse mr-2"></span>
+            <span id="connectionStatusText">Mode Simulasi (Lokal)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Quick Stats Widget Row -->
+    <div id="stats-mount" class="mb-6"></div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- LEFT PANEL: Form + Cart + Payment (5/12) -->
+      <section class="lg:col-span-5 flex flex-col gap-6">
+        <div id="sales-mount"></div>
+        <div id="cart-mount"></div>
+        <div id="payment-mount" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"></div>
+        <button id="btn-checkout" class="w-full bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white font-semibold py-2.5 px-4 rounded-xl shadow-md shadow-sky-200 transition duration-150 flex items-center justify-center gap-2 text-xs">
+          <i class="fa-solid fa-paper-plane"></i><span>Simpan & Proses Transaksi</span>
+        </button>
+      </section>
+
+      <!-- RIGHT PANEL: Table (7/12) -->
+      <section class="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col min-h-[400px]">
+        <div id="history-mount"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Overlays -->
+  <div id="receipt-mount"></div>
+  <div id="settings-mount"></div>
+  <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] hidden">
+    <div class="bg-slate-800 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg"></div>
+  </div>
+
+  <script>
+    import { SalesForm } from "../components/SalesForm.js";
+    import { CartList } from "../components/Cart.js";
+    import { PaymentPanel } from "../components/Payment.js";
+    import { ReceiptModal } from "../components/Receipt.js";
+    import { HistoryTable } from "../components/History.js";
+    import { StatsWidget } from "../components/Stats.js";
+    import { SettingsModal } from "../components/Settings.js";
+    import { subscribe, getState, getTotal, clearCart, setReceipt, setToast, setSettingsOpen, loadCatalog, loadSales } from "../utils/store.js";
+    import { getAppScriptUrl } from "../utils/storage.js";
+    import { syncTransaction } from "../utils/sync.js";
+
+    const sales = SalesForm();
+    const stats = StatsWidget();
+    const receipt = ReceiptModal();
+    const settings = SettingsModal();
+    const cartDesktop = CartList();
+    const paymentDesktop = PaymentPanel();
+    const historyDesktop = HistoryTable();
+
+    document.getElementById("sales-mount").appendChild(sales);
+    document.getElementById("cart-mount").appendChild(cartDesktop);
+    document.getElementById("payment-mount").appendChild(paymentDesktop);
+    document.getElementById("history-mount").appendChild(historyDesktop);
+    document.getElementById("stats-mount").appendChild(stats);
+    document.getElementById("receipt-mount").appendChild(receipt);
+    document.getElementById("settings-mount").appendChild(settings);
+
+    const renders = [sales, stats, receipt, settings, cartDesktop, paymentDesktop, historyDesktop];
+    subscribe(() => renders.forEach((r) => r._render && r._render()));
+
+    // Allow ?sheet=URL to auto-connect (handy for testing / sharing)
+    try {
+      const sp = new URLSearchParams(location.search).get("sheet");
+      if (sp) { localStorage.setItem("qasir_appscript_url", sp); updateConn(); }
+    } catch {}
+
+    // Connection status pill
+    function updateConn() {
+      const url = getAppScriptUrl();
+      const el = document.getElementById("connectionStatus");
+      const txt = document.getElementById("connectionStatusText");
+      if (url) { el.className = "hidden sm:flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"; txt.textContent = "Terhubung ke Spreadsheet"; }
+      else { el.className = "hidden sm:flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200"; txt.textContent = "Mode Simulasi (Lokal)"; }
+    }
+    updateConn();
+
+    // Toast
+    const toastEl = document.getElementById("toast");
+    function showToast(msg) {
+      if (!msg) { toastEl.classList.add("hidden"); return; }
+      toastEl.querySelector("div").textContent = msg;
+      toastEl.classList.remove("hidden");
+    }
+    subscribe((s) => showToast(s.toast));
+
+    // Checkout button
+    const cbd = document.getElementById("btn-checkout");
+    function renderCheckout() {
+      const n = getState().cart.length;
+      cbd.style.display = n ? "flex" : "none";
+    }
+    subscribe(renderCheckout);
+
+    async function doCheckout() {
+      const { cart, meta } = getState();
+      if (!cart.length) return;
+      const items = cart.slice();
+      const snapMeta = { ...meta };
+      cbd.disabled = true; cbd.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
+      const res = await syncTransaction(items);
+      if (res.ok) {
+        setReceipt({ items, meta: snapMeta, at: Date.now() });
+        clearCart();
+        setToast(res.offline ? "✓ Tersimpan lokal (offline)" : "✓ Tersinkron ke Sheets");
+        // refresh live data dari Sheet (jika terhubung)
+        const r2 = await loadSales();
+        if (r2.ok) setToast("✓ Riwayat diperbarui dari Sheet");
+      } else {
+        setToast("⚠ Gagal kirim: " + (res.error || "cek URL"));
+      }
+      cbd.disabled = false;
+      cbd.innerHTML = '<i class="fa-solid fa-paper-plane"></i><span>Simpan & Proses Transaksi</span>';
+    }
+    cbd.onclick = doCheckout;
+
+    // initial render
+    renders.forEach((r) => r._render && r._render());
+    renderCheckout();
+
+    // Load live data from Sheet (katalog + riwayat) jika URL sudah diset
+    (async () => {
+      const cat = await loadCatalog();
+      if (cat.ok) setToast(`✓ Katalog diambil dari Sheet (${cat.count} item)`);
+      const sal = await loadSales();
+      if (sal.ok) setToast(`✓ Riwayat diambil dari Sheet (${sal.count} baris)`);
+    })();
+  </script>
+</Layout>
+>>>>>>> master
